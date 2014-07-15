@@ -307,8 +307,6 @@ angular.module('angucomplete-alt', [] ).directive('angucompleteAlt', ['$parse', 
               $timeout.cancel(searchTimer);
             }
 
-            scope.searching = true;
-
               scope.searchTimerComplete(scope.searchStr);
               searchTimer = $timeout(function() {
                   scope.searching = false;
