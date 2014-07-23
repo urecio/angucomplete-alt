@@ -48,8 +48,9 @@ angular.module('angucomplete-alt', [] ).directive('angucompleteAlt', ['$parse', 
       '<div class="angucomplete-holder">' +
       '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-focus="resetHideResults()" ng-blur="hideResults()" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
       '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-if="showDropdown">' +
+            '    <div class="angucomplete-searching" ng-show="typemore && !searching">Type more...</div>' +
       '    <div class="angucomplete-searching" ng-show="searching">Searching...</div>' +
-      '    <div class="angucomplete-searching" ng-show="!searching && (!results || results.length == 0)">No results found</div>' +
+            '    <div class="angucomplete-searching" ng-show="!searching && !typemore && (!results || results.length == 0)">No results found</div>' +
       '    <div class="angucomplete-row" ng-repeat="result in results" ng-click="selectResult(result)" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
       '      <div ng-if="imageField" class="angucomplete-image-holder">' +
       '        <img ng-if="result.image && result.image != \'\'" ng-src="{{result.image}}" class="angucomplete-image"/>' +
@@ -69,6 +70,7 @@ angular.module('angucomplete-alt', [] ).directive('angucompleteAlt', ['$parse', 
           lastSearchTerm = null,
           hideTimer;
 
+            scope.typemore = false;
       scope.currentIndex = null;
       scope.searching = false;
       scope.searchStr = null;
@@ -98,9 +100,20 @@ angular.module('angucomplete-alt', [] ).directive('angucompleteAlt', ['$parse', 
         scope.results = [];
       };
 
-      var isNewSearchNeeded = function(newTerm, oldTerm) {
-        return newTerm.length >= minlength && newTerm !== oldTerm;
-      };
+            var isNewSearchNeeded = function (newTerm, oldTerm, event) {
+
+                if (newTerm.length >= minlength && (newTerm !== oldTerm || (event && event.which === KEY_DW))) {
+                    scope.typemore = false;
+                    scope.showDropdown = false;
+                    return true;
+                } else if (newTerm.length < minlength) {
+                    scope.results = [];
+                    scope.typemore = true;
+                    scope.showDropdown = true;
+                    scope.$apply();
+                    return false;
+                }
+            };
 
       var extractTitle = function(data) {
         // split title fields and run extractValue for each and join with ' '
@@ -265,18 +278,37 @@ angular.module('angucomplete-alt', [] ).directive('angucompleteAlt', ['$parse', 
           }
         }
 
-      };
+            };
+            var search = function (event) {
+                if (!scope.searchStr || scope.searchStr === '') {
+                    scope.showDropdown = false;
+                    lastSearchTerm = null;
+                } else if (isNewSearchNeeded(scope.searchStr, lastSearchTerm, event)) {
+                    scope.searching = true;
+                    lastSearchTerm = scope.searchStr;
+                    scope.showDropdown = true;
+                    scope.currentIndex = -1;
+                    scope.results = [];
 
-      scope.hoverRow = function(index) {
-        scope.currentIndex = index;
-      };
+                    if (searchTimer) {
+                        $timeout.cancel(searchTimer);
+                    }
 
-      scope.selectResult = function(result) {
-        // Restore original values
-        if (scope.matchClass) {
-          result.title = extractTitle(result.originalObject);
-          result.description = extractValue(result.originalObject, scope.descriptionField);
-        }
+                    scope.searchTimerComplete(scope.searchStr);
+                    searchTimer = $timeout(function () {
+                        scope.searching = false;
+                    }, scope.pause);
+                }
+                scope.hoverRow = function (index) {
+                    scope.currentIndex = index;
+                };
+            }
+            scope.selectResult = function (result) {
+                // Restore original values
+                if (scope.matchClass) {
+                    result.title = extractTitle(result.originalObject);
+                    result.description = extractValue(result.originalObject, scope.descriptionField);
+                }
 
         if (scope.clearSelected) {
           scope.searchStr = null;
@@ -291,49 +323,36 @@ angular.module('angucomplete-alt', [] ).directive('angucompleteAlt', ['$parse', 
 
       inputField = elem.find('input');
 
-      scope.keyPressed = function(event) {
-        if (!(event.which === KEY_UP || event.which === KEY_DW || event.which === KEY_EN)) {
-          if (!scope.searchStr || scope.searchStr === '') {
-            scope.showDropdown = false;
-            lastSearchTerm = null;
-          } else if (isNewSearchNeeded(scope.searchStr, lastSearchTerm)) {
-              scope.searching = true;
-            lastSearchTerm = scope.searchStr;
-            scope.showDropdown = true;
-            scope.currentIndex = -1;
-            scope.results = [];
+            scope.keyPressed = function (event) {
+                if (!(event.which === KEY_UP || event.which === KEY_DW || event.which === KEY_EN)) {
+                    search();
+                } else {
+                    event.preventDefault();
+                }
 
-            if (searchTimer) {
-              $timeout.cancel(searchTimer);
-            }
-
-              scope.searchTimerComplete(scope.searchStr);
-              searchTimer = $timeout(function() {
-                  scope.searching = false;
-              }, scope.pause);
-          }
-        } else {
-          event.preventDefault();
-        }
-      };
+            };
 
       inputField.on('keyup', scope.keyPressed);
 
-      elem.on('keydown', function (event) {
-        if(event.which === KEY_DW && scope.results) {
-          if ((scope.currentIndex + 1) < scope.results.length) {
-            scope.$apply(function() {
-              scope.currentIndex ++;
+            elem.on('keydown', function (event) {
+                if (event.which === KEY_DW && scope.results.length === 0) {
+                    search(event);
+                } else if (event.which === KEY_DW && scope.results) {
+
+                    if ((scope.currentIndex + 1) < scope.results.length) {
+                        scope.$apply(function () {
+                            scope.currentIndex++;
+                        });
+                    }
+                } else if (event.which === KEY_UP && scope.results) {
+
+                    if (scope.currentIndex >= 1) {
+                        scope.$apply(function () {
+                            scope.currentIndex--;
+                        });
+                    }
+                }
             });
-          }
-        } else if(event.which === KEY_UP && scope.results) {
-          if (scope.currentIndex >= 1) {
-            scope.$apply(function() {
-              scope.currentIndex --;
-            });
-          }
-        }
-      });
 
       elem.on('keyup', function (event) {
         if (event.which === KEY_EN && scope.results) {
