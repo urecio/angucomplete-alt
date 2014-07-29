@@ -5,7 +5,8 @@ This is a fork of Daryl Rowland's angucomplete (https://github.com/darylrowland/
 
 * change long attribute names to hyphenated ones
 * coding style similar to angular standard
-* refactored in general
+* more refactored in general
+* created factory with some methods to be able to inject them
 * jshint
 * more test coverage
 
@@ -16,6 +17,7 @@ To see a demo go here: http://ghiden.github.io/angucomplete-alt
 * Deliberately minimally styled so you can customise it to your heart's content!
 * Reads JSON data and allows you to specify which fields to use for display
 * Simple setup - e.g. to pull data from a server, just set the url parameter
+* Using the built in directives of angular (keyup) instead of jquery, to avoid many scope digests
 
 ### Extra Features
 * Request format function: if you need to tweak data before you send to your search API, you can set your own format function. Search query goes through your function and gets sent to your API.
@@ -92,3 +94,5 @@ var app = angular.module('app', ["angucomplete-alt"]);
 | clear-selected | To clear out input field upon selecting an item, set this attribute to true. | No | true |
 | override-suggestions | To override suggestions and set the value in input field to selectedObject | No | true |
 | writting-callback | Callback to a custom function every time the input value changes | No | callBack |
+| custom-proccessing | Call to a custom function at the begining of the results process | No | customProccessing |
+
