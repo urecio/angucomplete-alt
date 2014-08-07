@@ -94,5 +94,5 @@ var app = angular.module('app', ["angucomplete-alt"]);
 | clear-selected | To clear out input field upon selecting an item, set this attribute to true. | No | true |
 | override-suggestions | To override suggestions and set the value in input field to selectedObject | No | true |
 | writting-callback | Callback to a custom function every time the input value changes | No | callBack |
-| custom-proccessing | Call to a custom function at the begining of the results process | No | customProccessing |
+| custom-proccessing | Call to a custom function on each row of the proccessing | No | customProccessing |
 

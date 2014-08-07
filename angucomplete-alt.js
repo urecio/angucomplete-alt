@@ -12,20 +12,21 @@
 
 angular.module('angucomplete-alt', [])
     .factory('extractor', function () {
-            function extractValue(obj, key) {
-                var keys, result;
-                if (key) {
-                    keys = key.split('.');
-                    result = obj;
-                    keys.forEach(function (k) {
-                        result = result[k];
-                    });
-                }
-                else {
-                    result = obj;
-                }
-                return result;
-            };
+        function extractValue(obj, key) {
+            var keys, result;
+            if (key) {
+                keys = key.split('.');
+                result = obj;
+                keys.forEach(function (k) {
+                    result = result[k];
+                });
+            }
+            else {
+                result = obj;
+            }
+
+            return result;
+        };
         var extractTitle = function (data, title) {
             // split title fields and run extractValue for each and join with ' '
             return title.split(',')
@@ -39,7 +40,65 @@ angular.module('angucomplete-alt', [])
             extractTitle: extractTitle
         };
     })
-    .directive('angucompleteAlt', ['$parse', '$http', '$sce', '$timeout', 'extractor', function ($parse, $http, $sce, $timeout, extractor) {
+    .filter('highlight', ['$sce', function ($sce) {
+        return function (target, str, matchClass, subMin, subMax) {
+            // subMin and subMax are options to short the string
+            // subMin will be the number of characteres of separation from the match to the left side of the string
+            // For example:
+            // target = 'abcdefghijkl'
+            // str = fgh
+            //subMin = 4; subMax = 1
+            // result = bcdefghi
+            var result = '',
+                regExSpecialChars = /[\[\\\^\$\.\|\?\*\+\(\)\{\}]/g,
+                index, lastIndex;
+            // firs of all removing forbidden regex chars from the str
+            str = str.replace(regExSpecialChars, '');
+            var re = new RegExp(str, 'gi')
+
+            var extractString = function (isLast) {
+                if (subMin) {
+                    if (subMax) {
+                        if (!isLast) result += target.substr(index - subMin, subMin + str.length + subMax) + ' ... ';
+                        else result += '... ' + target.substr(index - subMin, subMin + str.length + subMax) + ' ... ';
+                    } else {
+                        if (!isLast) result += target.substr(index - subMin);
+                        else result += '... ' + target.substr(index - subMin);
+                    }
+                } else if (subMax) {
+                    result += target.substr(0, index + str.length - 1 + subMax) + ' ... ';
+                } else {
+                    result = target;
+                }
+                if (matchClass)
+                    result = result.replace(re,
+                        '<span class="' + matchClass + '">' + str + '</span>');
+
+            };
+            if (!target) {
+                return;
+            }
+
+
+            index = target.indexOf(str);
+            if (index != -1) {
+                extractString(false);
+                lastIndex = target.lastIndexOf(str);
+                if (lastIndex != -1 && lastIndex != index) {
+                    index = lastIndex;
+                    extractString(true);
+                }
+
+            }
+            else {
+                subMax += subMin;
+                subMin = 0;
+                extractString(false);
+            }
+            return $sce.trustAsHtml(result);
+        };
+    }])
+    .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
         var KEY_DW = 40,
             KEY_UP = 38,
             KEY_ES = 27,
@@ -47,8 +106,15 @@ angular.module('angucomplete-alt', [])
             KEY_BS = 8,
             KEY_DEL = 46,
             MIN_LENGTH = 3,
-            PAUSE = 500,
-            BLUR_TIMEOUT = 200;
+            PAUSE = 200,
+            BLUR_TIMEOUT = 200,
+            MAX_WAIT_IIME = 400,
+            SUB_MIN_TITLE = 400,
+            SUB_MAX_TITLE = 400,
+            SUB_MIN_DESCRIPTION = 400,
+            SUB_MAX_DESCRIPTION = 400,
+            TEXT_SEARCHING = 'Searching...',
+            TEXT_NORESULTS = 'No results found';
 
         return {
             restrict: 'EA',
@@ -72,37 +138,43 @@ angular.module('angucomplete-alt', [])
                 matchClass: '@',
                 clearSelected: '@',
                 overrideSuggestions: '@',
-                customProccessing: '='
+                customProcessing: '=',
+                suggestionsProperty: '@',
+                maxWaitTime: '@',
+                subMinTitle: '@?',
+                subMaxTitle: '@?',
+                subMinDescription: '@?',
+                subMaxDescription: '@?'
             },
-            template: '<div class="angucomplete-holder">' +
+            template: '<div ng-form name="angucomplete_form" class="angucomplete-holder">' +
                 '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-focus="resetHideResults()" ng-blur="hideResults()" ng-keydown="keyDown($event)" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
                 '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-if="showDropdown">' +
                 '    <div class="angucomplete-searching" ng-show="typemore && !searching">Type more...</div>' +
-                '    <div class="angucomplete-searching" ng-show="searching">Searching...</div>' +
-                '    <div class="angucomplete-searching" ng-show="!searching && !typemore && (!results || results.length == 0)">No results found</div>' +
+                '    <div class="angucomplete-searching" ng-show="searching" ng-bind="textSearching"></div>' +
+                '    <div class="angucomplete-searching" ng-show="!searching && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults">No results found</div>' +
+                '    <div class="angucomplete-searching" ng-show="suggestion && !searching">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ searchStr }}</span> </div>' +
                 '    <div class="angucomplete-row" ng-if="!typemore && !searching" ng-repeat="result in results" ng-click="selectResult(result)" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
-                '      <div ng-if="imageField" class="angucomplete-image-holder">' +
+                '    <div ng-if="imageField" class="angucomplete-image-holder">' +
                 '        <img ng-if="result.image && result.image != \'\'" ng-src="{{result.image}}" class="angucomplete-image"/>' +
                 '        <div ng-if="!result.image && result.image != \'\'" class="angucomplete-image-default"></div>' +
                 '      </div>' +
-                '      <div class="angucomplete-title" ng-if="matchClass" ng-bind-html="result.title"></div>' +
-                '      <div class="angucomplete-title" ng-if="!matchClass">{{ result.title }}</div>' +
-                '      <div ng-if="matchClass && result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description"></div>' +
-                '      <div ng-if="!matchClass && result.description && result.description != \'\'" class="angucomplete-description">{{result.description}}</div>' +
+                '      <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass:{{ subMinTitle }}:{{ subMaxTitle }}"></div>' +
+                '      <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass:{{ subMinDescription }}:{{ subMaxDescription }}"></div>' +
                 '    </div>' +
                 '  </div>' +
                 '</div>',
-            link: function (scope, elem, attrs) {
-                var inputField,
-                    minlength = MIN_LENGTH,
-                    searchTimer = null,
+            link: function (scope, elem, attrs, ctrl) {
+                var minlength = MIN_LENGTH,
+                    searchTimerOut = null,
                     lastSearchTerm = null,
-                    hideTimer;
+                    hideTimer,
+                    pauseBeforeSearch = null;
 
                 scope.typemore = false;
                 scope.currentIndex = null;
                 scope.searching = false;
                 scope.searchStr = null;
+                scope.suggestion = false;
 
                 var callOrAssign = function (value) {
                     if (typeof scope.selectedObject === 'function') {
@@ -147,26 +219,18 @@ angular.module('angucomplete-alt', [])
                         return false
                     }
                 };
-
-
-
-
-                var findMatchString = function (target, str) {
-                    var result, matches, re = new RegExp(str, 'i');
-                    if (!target) {
-                        return;
-                    }
-                    matches = target.match(re);
-                    if (matches) {
-                        result = target.replace(re,
-                            '<span class="' + scope.matchClass + '">' + matches[0] + '</span>');
-                    }
-                    else {
-                        result = target;
-                    }
-                    return $sce.trustAsHtml(result);
-                };
-
+                if (!scope.subMinTitle) {
+                    scope.subMinTitle = SUB_MIN_TITLE;
+                }
+                if (!scope.subMaxTitle) {
+                    scope.subMaxTitle = SUB_MAX_TITLE;
+                }
+                if (!scope.subMinDescription) {
+                    scope.subMinDescription = SUB_MIN_DESCRIPTION;
+                }
+                if (!scope.subMaxDescription) {
+                    scope.subMaxDescription = SUB_MAX_DESCRIPTION;
+                }
                 if (scope.writtingCallback) {
                     scope.callChange = function () {
                         scope.writtingCallback();
@@ -179,7 +243,9 @@ angular.module('angucomplete-alt', [])
                 if (!scope.pause) {
                     scope.pause = PAUSE;
                 }
-
+                if (!scope.maxWaitTime) {
+                    scope.maxWaitTime = MAX_WAIT_IIME;
+                }
                 if (!scope.clearSelected) {
                     scope.clearSelected = false;
                 }
@@ -187,6 +253,10 @@ angular.module('angucomplete-alt', [])
                 if (!scope.overrideSuggestions) {
                     scope.overrideSuggestions = false;
                 }
+
+
+                scope.textSearching = attrs.textSearching ? attrs.textSearching : TEXT_SEARCHING;
+                scope.textNoResults = attrs.textNoResults ? attrs.textNoResults : TEXT_NORESULTS;
 
                 scope.hideResults = function () {
 
@@ -203,54 +273,60 @@ angular.module('angucomplete-alt', [])
                     }
                 };
 
-                scope.processResults = function (responseData, str) {
-                    var i, description, image, text;
-                    if (scope.customProccessing && responseData) {
-                        responseData = scope.customProccessing(responseData);
-                    }
-                    if (responseData && responseData.length > 0) {
-                        scope.results = [];
-
-                        for (i = 0; i < responseData.length; i++) {
-                            if (scope.titleField && scope.titleField !== '') {
-                                text = extractor.extractTitle(responseData[i], scope.titleField);
-                            }
-
-                            description = '';
-                            if (scope.descriptionField) {
-                                description = extractor.extractValue(responseData[i], scope.descriptionField);
-                            }
-
-                            image = '';
-                            if (scope.imageField) {
-                                image = extractor.extractValue(responseData[i], scope.imageField);
-                            }
-
-                            if (scope.matchClass) {
-                                text = findMatchString(text, str);
-                                description = findMatchString(description, str);
-                            }
-
-                            scope.results[scope.results.length] = {
-                                title: text,
-                                description: description,
-                                image: image,
-                                originalObject: responseData[i]
-                            };
-                            scope.searching = false;
-
+                scope.process = function (responseData) {
+                    var description, image, text;
+                    angular.forEach(responseData, function (object) {
+                        if (scope.customProcessing) {
+                            object = scope.customProcessing(object);
+                        }
+                        if (scope.titleField && scope.titleField !== '') {
+                            text = extractor.extractTitle(object, scope.titleField);
                         }
 
-                    } else {
-                        scope.results = [];
-                    }
+                        description = '';
+                        if (scope.descriptionField) {
+                            description = extractor.extractValue(object, scope.descriptionField);
+                        }
+
+                        image = '';
+                        if (scope.imageField) {
+                            image = extractor.extractValue(object, scope.imageField);
+                        }
+
+
+                        scope.results[scope.results.length] = {
+                            title: text,
+                            description: description,
+                            image: image,
+                            originalObject: object
+                        };
+                        scope.searching = false;
+
+                    });
                 };
 
-                scope.searchTimerComplete = function (str) {
+                scope.processResults = function (responseData) {
+                    var dataFormatted = responseFormatter(responseData),
+                        data;
+                    scope.results = [];
+
+                    //todo: test the suggestions
+                    //todo: change the 'result' for the titleField word
+                    if (extractor.extractValue(dataFormatted, scope.suggestionsProperty)) {
+                        data = extractor.extractValue(dataFormatted, scope.remoteUrlDataField);
+                        scope.suggestion = extractor.extractValue(data, 'result');
+                        scope.searching = false;
+                    } else {
+                        scope.process(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
+                    }
+
+                };
+
+                scope.searchTimerComplete = function () {
                     // Begin the search
                     var searchFields, matches, i, match, s, params;
 
-                    if (str.length >= minlength) {
+                    if (scope.searchStr.length >= minlength) {
                         if (scope.localData) {
                             searchFields = scope.searchFields.split(',');
 
@@ -260,7 +336,7 @@ angular.module('angucomplete-alt', [])
                                 match = false;
 
                                 for (s = 0; s < searchFields.length; s++) {
-                                    match = match || (scope.localData[i][searchFields[s]].toLowerCase().indexOf(str.toLowerCase()) >= 0);
+                                    match = match || (scope.localData[i][searchFields[s]].toLowerCase().indexOf(scope.searchStr.toLowerCase()) >= 0);
                                 }
 
                                 if (match) {
@@ -269,27 +345,25 @@ angular.module('angucomplete-alt', [])
                             }
 
 
-                            scope.processResults(matches, str);
+                            scope.processResults(matches);
 
                         } else if (scope.remoteUrlRequestFormatter) {
-                            params = scope.remoteUrlRequestFormatter(str);
+                            params = scope.remoteUrlRequestFormatter(scope.searchStr);
                             $http.get(scope.remoteUrl, {params: params}).
                                 success(function (responseData, status, headers, config) {
 
-                                    scope.processResults(
-                                        extractor.extractValue(responseFormatter(responseData), scope.remoteUrlDataField), str
-                                    );
+                                    scope.processResults(responseData);
                                 }).
                                 error(function (data, status, headers, config) {
                                     console.log('error');
                                 });
 
                         } else {
-                            $http.get(scope.remoteUrl + str, {}).
+                            $http.get(scope.remoteUrl + scope.searchStr, {}).
                                 success(function (responseData, status, headers, config) {
 
                                     scope.processResults(
-                                        extractor.extractValue(responseFormatter(responseData), scope.remoteUrlDataField), str
+                                        extractor.extractValue(responseData)
                                     );
                                 }).
                                 error(function (data, status, headers, config) {
@@ -309,14 +383,23 @@ angular.module('angucomplete-alt', [])
                         scope.showDropdown = true;
                         scope.currentIndex = -1;
                         scope.results = [];
-                        if (searchTimer) {
-                            $timeout.cancel(searchTimer);
-                        }
 
-                        scope.searchTimerComplete(scope.searchStr);
-                        searchTimer = $timeout(function () {
-                            scope.searching = false;
+                        if (pauseBeforeSearch) {
+                            $timeout.cancel(pauseBeforeSearch);
+                        }
+                        //pause before searching
+                        pauseBeforeSearch = $timeout(function () {
+                            scope.searchTimerComplete();
+                            //max time to wait for the response
+                            if (searchTimerOut) {
+                                $timeout.cancel(searchTimerOut);
+                            }
+                            searchTimerOut = $timeout(function () {
+                                scope.searching = false;
+                            }, scope.maxWaitTime);
                         }, scope.pause);
+
+
                     }
                     scope.hoverRow = function (index) {
                         scope.currentIndex = index;
