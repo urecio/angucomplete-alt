@@ -51,41 +51,42 @@ angular.module('angucomplete-alt', [])
             // result = bcdefghi
             var result = '',
                 regExSpecialChars = /[\[\\\^\$\.\|\?\*\+\(\)\{\}]/g,
-                index, lastIndex, ending, lastSubMax=-1;
+                index, lastIndex, ending, lastSubMax=-1,
+                subMinIndex, begining;
             // firs of all removing forbidden regex chars from the str
             str = str.replace(regExSpecialChars, '');
             var re = new RegExp(str, 'gi')
-
-            var extractString = function (isLast) {
+            var extractString = function () {
                 if (subMin) {
-
-                    // Checking if we are overwritting the last shorting in the same phrase
-                    if (lastSubMax!=-1) {
-                        if (lastSubMax < (index - subMin))
-                            subMin = index - subMin;
-                        else subMin = lastSubMax;
-
+                    // Checking if we are overwritting the last shorting in the same phrase or the string is shorter than the subMin
+                    subMinIndex = index - subMin;
+                    if (subMinIndex <= 0){
+                        begining = '';
+                        subMinIndex = 0;
+                    } else if(lastSubMax != -1 && lastSubMax > subMinIndex){
+                        subMinIndex = lastSubMax;
+                        begining = '';
+                    } else {
+                        begining = '...';
                     }
 
                     if (subMax) {
 
                         subMax = subMin + str.length - 1 + subMax;
-                        ending = (subMax <= target.length) ? '' : '...';
+                        ending = (subMax < target.length) ? '...' : '';
 
-                        if (!isLast) result += target.substr(subMin, subMax) + ending;
-                        else result += '... ' + target.substr(subMin, subMax) + ending;
+                        result += begining + target.substr(subMinIndex, subMax) + ending;
 
                         lastSubMax = subMax;
                     } else {
 
-                        if (!isLast) result += target.substr(subMin);
-                        else result += '... ' + target.substr(subMin);
+                        result += begining + target.substr(subMinIndex);
 
                     }
                 } else if (subMax) {
 
                     subMax = subMin + str.length - 1 + subMax;
-                    ending = (subMax <= target.length) ? '' : '...';
+                    ending = (subMax < target.length) ? '...' : '';
 
                     result += target.substr(0, subMax) + ending;
 
@@ -106,20 +107,20 @@ angular.module('angucomplete-alt', [])
             }
 
 
-            index = target.indexOf(str);
+            index = target.toLowerCase().indexOf(str.toLowerCase());
             if (index != -1) {
-                extractString(false);
-                lastIndex = target.lastIndexOf(str);
+                extractString();
+                lastIndex = target.toLowerCase().lastIndexOf(str.toLowerCase());
                 if (lastIndex != -1 && lastIndex != index) {
                     index = lastIndex;
-                    extractString(true);
+                    extractString();
                 }
 
             }
             else {
                 subMax += subMin;
                 subMin = 0;
-                extractString(false);
+                extractString();
             }
             return $sce.trustAsHtml(result);
         };
