@@ -51,24 +51,50 @@ angular.module('angucomplete-alt', [])
             // result = bcdefghi
             var result = '',
                 regExSpecialChars = /[\[\\\^\$\.\|\?\*\+\(\)\{\}]/g,
-                index, lastIndex;
+                index, lastIndex, ending, lastSubMax=-1;
             // firs of all removing forbidden regex chars from the str
             str = str.replace(regExSpecialChars, '');
             var re = new RegExp(str, 'gi')
 
             var extractString = function (isLast) {
                 if (subMin) {
+
+                    // Checking if we are overwritting the last shorting in the same phrase
+                    if (lastSubMax!=-1) {
+                        if (lastSubMax < (index - subMin))
+                            subMin = index - subMin;
+                        else subMin = lastSubMax;
+
+                    }
+
                     if (subMax) {
-                        if (!isLast) result += target.substr(index - subMin, subMin + str.length + subMax) + ' ... ';
-                        else result += '... ' + target.substr(index - subMin, subMin + str.length + subMax) + ' ... ';
+
+                        subMax = subMin + str.length - 1 + subMax;
+                        ending = (subMax <= target.length) ? '' : '...';
+
+                        if (!isLast) result += target.substr(subMin, subMax) + ending;
+                        else result += '... ' + target.substr(subMin, subMax) + ending;
+
+                        lastSubMax = subMax;
                     } else {
-                        if (!isLast) result += target.substr(index - subMin);
-                        else result += '... ' + target.substr(index - subMin);
+
+                        if (!isLast) result += target.substr(subMin);
+                        else result += '... ' + target.substr(subMin);
+
                     }
                 } else if (subMax) {
-                    result += target.substr(0, index + str.length - 1 + subMax) + ' ... ';
+
+                    subMax = subMin + str.length - 1 + subMax;
+                    ending = (subMax <= target.length) ? '' : '...';
+
+                    result += target.substr(0, subMax) + ending;
+
+                    lastSubMax = subMax;
+
                 } else {
+
                     result = target;
+
                 }
                 if (matchClass)
                     result = result.replace(re,
