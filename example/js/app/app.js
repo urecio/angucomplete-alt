@@ -1,1 +1,1 @@
-var app = angular.module('app', ["ngTouch", "angucomplete-alt"]);
+var app = angular.module('app', ["ngTouch", "angucomplete-alt","ngAnimate","angular-loading-bar","ui.bootstrap"]);

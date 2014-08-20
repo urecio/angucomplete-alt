@@ -3,8 +3,12 @@
     <title>Angucomplete Alt: Autocomplete Directive for AngularJS</title>
     <meta name='viewport' content='width=device-width,initial-scale=1'>
     <link rel="stylesheet" href="css/structure.css"/>
-    <link rel="stylesheet" href="css/angucomplete-alt.css"/>
     <link rel="stylesheet" href="fonts/bariol/bariol.css"/>
+    <link rel="stylesheet" href="../bower_components/angular-loading-bar/src/loading-bar.css"/>
+    <link rel="stylesheet" href="css/angucomplete-alt.css"/>
+      <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.css"/>
+
+
     </head>
   <body ng-app="app">
     <a href="https://github.com/ghiden/angucomplete-alt"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/a6677b08c955af8400f44c6298f40e7d19cc5b2d/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png"></a>
@@ -33,7 +37,7 @@
 
         <h3>Example 2 - People</h3>
         <div class="padded-row">
-          <angucomplete-alt id="ex2" placeholder="Search people" pause="300" selected-object="selectedPerson" local-data="people" search-fields="firstName,surname" title-field="firstName,surname" description-field="twitter" image-field="pic" minlength="1" input-class="form-control form-control-small" match-class="highlight" />
+          <angucomplete-alt id="ex2" placeholder="Search people" remote-url-data-field="" selected-object="selectedPerson" local-data="people" search-fields="firstName,surname" title-field="firstName,surname" description-field="twitter" image-field="pic" minlength="1" input-class="form-control form-control-small" match-class="highlight" />
         </div>
         <div class="" ng-show="selectedPerson">
           You selected <span class="bold-span">{{selectedPerson.originalObject.firstName}} {{selectedPerson.originalObject.surname}}</span>
@@ -69,10 +73,17 @@
 
         <h3>Example 5 - Using dumb search API that returns all results</h3>
         <div class="padded-row">
-          <angucomplete-alt id="ex5" placeholder="Search countries" pause="100" selected-object="selectedCountry5" remote-url="countries.json?" remote-url-data-field="data" search-fields="name" title-field="name" description-field="type" minlength="1" input-class="form-control form-control-small" match-class="highlight" />
+            <div id="example5"></div>
+
+            <angucomplete-alt id="searchInput" search-fields="name,abstract" placeholder="Search" pause="400"
+                              selected-object="selectedCountry5" remote-url="//localhost:8080/app_dev.php/search.json?query="
+                              title-field="title" description-field="abstract" minlength="3" input-class="form-control width-100"
+                              match-class="highlight" writting-callback="hasWritten"
+                              custom-processing="customProcessing" remote-url-data-field="data" suggestions-property="suggestion"
+                              sub-min-title="20" sub-max-title="20" sub-min-description="30" sub-max-description="30" show-more="true"/>
         </div>
         <div class="" ng-show="selectedCountry5">
-          You selected <span class="bold-span">{{selectedCountry5.originalObject.name}}</span> which has a country code of <span class="bold-span">{{selectedCountry5.originalObject.code}}</span>
+          You selected <span class="bold-span">{{selectedCountry5.originalObject.title}}</span> which has a country code of <span class="bold-span">{{selectedCountry5.originalObject.code}}</span>
         </div>
 
       </div>
@@ -94,11 +105,17 @@
         <h5>Forked by Hidenari Nozaki (<a href="http://twitter.com/ghiden">@ghiden</a>)</h5>
       </div>
 
-      <script src="js/angular.min.js"></script>
+        <script src="../bower_components/angular/angular.js"></script>
       <script src="js/angular-touch.min.js"></script>
+        <script src="js/app/directives/angucomplete-alt.js"></script>
+        <script src="../bower_components/angular-loading-bar/src/loading-bar.js"></script>
+        <script src="../bower_components/angular-animate/angular-animate.js"></script>
+        <script src="../bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+
+
       <script src="js/app/app.js"></script>
       <script src="js/app/controllers/main-controller.js"></script>
-      <script src="js/app/directives/angucomplete-alt.js"></script>
+
     </div>
   </body>
 </html>

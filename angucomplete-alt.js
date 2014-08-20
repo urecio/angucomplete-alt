@@ -52,7 +52,7 @@ angular.module('angucomplete-alt', [])
             var result = '',
                 regExSpecialChars = /[\[\\\^\$\.\|\?\*\+\(\)\{\}]/g,
                 index, lastIndex, ending, lastSubMax=-1,
-                subMinIndex, begining;
+                subMinIndex, begining, subMaxIndex;
             // firs of all removing forbidden regex chars from the str
             str = str.replace(regExSpecialChars, '');
             var re = new RegExp(str, 'gi')
@@ -63,7 +63,7 @@ angular.module('angucomplete-alt', [])
                     if (subMinIndex <= 0){
                         begining = '';
                         subMinIndex = 0;
-                    } else if(lastSubMax != -1 && lastSubMax > subMinIndex){
+                    } else if(lastSubMax != -1){
                         subMinIndex = lastSubMax;
                         begining = '';
                     } else {
@@ -73,7 +73,8 @@ angular.module('angucomplete-alt', [])
                     if (subMax) {
 
                         subMax = subMin + str.length - 1 + subMax;
-                        ending = (subMax < target.length) ? '...' : '';
+                        subMaxIndex = subMinIndex + subMax;
+                        ending = (subMaxIndex < target.length) ? '...' : '';
 
                         result += begining + target.substr(subMinIndex, subMax) + ending;
 
@@ -85,7 +86,7 @@ angular.module('angucomplete-alt', [])
                     }
                 } else if (subMax) {
 
-                    subMax = subMin + str.length - 1 + subMax;
+                    subMax =  str.length - 1 + subMax;
                     ending = (subMax < target.length) ? '...' : '';
 
                     result += target.substr(0, subMax) + ending;
@@ -171,26 +172,41 @@ angular.module('angucomplete-alt', [])
                 subMinTitle: '@?',
                 subMaxTitle: '@?',
                 subMinDescription: '@?',
-                subMaxDescription: '@?'
+                subMaxDescription: '@?',
+                showMore: '@?'
             },
             template: '<div ng-form name="angucomplete_form" class="angucomplete-holder">' +
-                '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-focus="resetHideResults()" ng-blur="hideResults()" ng-keydown="keyDown($event)" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
-                '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-if="showDropdown">' +
+                '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-focus="resetHideResults()" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
+                '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-if="showDropdown !searching">' +
                 '    <div class="angucomplete-searching" ng-show="typemore && !searching">Type more...</div>' +
-                '    <div class="angucomplete-searching" ng-show="searching" ng-bind="textSearching"></div>' +
                 '    <div class="angucomplete-searching" ng-show="!searching && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults">No results found</div>' +
                 '    <div class="angucomplete-searching" ng-show="suggestion && !searching">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ searchStr }}</span> </div>' +
-                '    <div class="angucomplete-row" ng-if="!typemore && !searching" ng-repeat="result in results" ng-click="selectResult(result)" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
+                '    <div class="angucomplete-row" ng-if="!typemore && !searching" ng-repeat="result in results" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
+                ' <div class="clickable" ng-click="selectResult(result)">' +
                 '    <div ng-if="imageField" class="angucomplete-image-holder">' +
                 '        <img ng-if="result.image && result.image != \'\'" ng-src="{{result.image}}" class="angucomplete-image"/>' +
                 '        <div ng-if="!result.image && result.image != \'\'" class="angucomplete-image-default"></div>' +
                 '      </div>' +
+                '<div class="title-description" ng-hide="expanded">    ' +
                 '      <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass:{{ subMinTitle }}:{{ subMaxTitle }}"></div>' +
                 '      <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass:{{ subMinDescription }}:{{ subMaxDescription }}"></div>' +
+                '</div>' +
+                '</div>' +
+                '<accordion close-others ng-if="(subMinTitle || subMaxTitle || subMinDescription || subMaxDescription) && showMore">' +
+                '<accordion-group heading="Show more..." is-open="status.isFirstOpen" is-disabled="status.isFirstDisabled">' +
+                '<div class="title-description">    ' +
+                '  <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass"></div>' +
+                '      <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass"></div>' +
+                '</div>' +
+                '</accordion-group>' +
+                '</accordion>' +
                 '    </div>' +
                 '  </div>' +
                 '</div>',
-            link: function (scope, elem, attrs, ctrl) {
+            link: function (scope, elem, attrs) {
+                //todo: document the showMore functionality
+                //todo: finish the effect for the showMore functionality
+                //todo: test for local json
                 var minlength = MIN_LENGTH,
                     searchTimerOut = null,
                     lastSearchTerm = null,
@@ -202,6 +218,7 @@ angular.module('angucomplete-alt', [])
                 scope.searching = false;
                 scope.searchStr = null;
                 scope.suggestion = false;
+                scope.expanded = false;
 
                 var callOrAssign = function (value) {
                     if (typeof scope.selectedObject === 'function') {
@@ -299,6 +316,17 @@ angular.module('angucomplete-alt', [])
                         $timeout.cancel(hideTimer);
                     }
                 };
+
+                scope.expand = function(){
+                    scope.expanded = true;
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+                scope.collapse = function(){
+                    scope.expanded = false;
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
 
                 scope.process = function (responseData) {
                     var description, image, text;

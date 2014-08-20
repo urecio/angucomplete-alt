@@ -1,5 +1,10 @@
-app.controller('MainController', ['$scope', '$http',
-    function MainController($scope, $http) {
+app.config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
+        cfpLoadingBarProvider.parentSelector = '#example5';
+        cfpLoadingBarProvider.spinnerOnlyClass = 'spinner-icon';
+        cfpLoadingBarProvider.spinnerSelector = '#searchInput_value';
+    }]).controller('MainController', ['$scope', '$http',
+    function MainController($scope) {
+
 
         $scope.people = [
             {firstName: "Daryl", surname: "Rowland", twitter: "@darylrowland", pic: "img/daryl.jpeg"},
