@@ -51,7 +51,7 @@ angular.module('angucomplete-alt', [])
             // result = bcdefghi
             var result = '',
                 regExSpecialChars = /[\[\\\^\$\.\|\?\*\+\(\)\{\}]/g,
-                index, lastIndex, ending, lastSubMax=-1,
+                index, lastIndex, ending, lastSubMax = -1,
                 subMinIndex, begining, subMaxIndex;
             // firs of all removing forbidden regex chars from the str
             str = str.replace(regExSpecialChars, '');
@@ -60,10 +60,10 @@ angular.module('angucomplete-alt', [])
                 if (subMin) {
                     // Checking if we are overwritting the last shorting in the same phrase or the string is shorter than the subMin
                     subMinIndex = index - subMin;
-                    if (subMinIndex <= 0){
+                    if (subMinIndex <= 0) {
                         begining = '';
                         subMinIndex = 0;
-                    } else if(lastSubMax != -1){
+                    } else if (lastSubMax != -1) {
                         subMinIndex = lastSubMax;
                         begining = '';
                     } else {
@@ -86,7 +86,7 @@ angular.module('angucomplete-alt', [])
                     }
                 } else if (subMax) {
 
-                    subMax =  str.length - 1 + subMax;
+                    subMax = str.length - 1 + subMax;
                     ending = (subMax < target.length) ? '...' : '';
 
                     result += target.substr(0, subMax) + ending;
@@ -317,12 +317,12 @@ angular.module('angucomplete-alt', [])
                     }
                 };
 
-                scope.expand = function(){
+                scope.expand = function () {
                     scope.expanded = true;
                     event.stopPropagation();
                     event.preventDefault();
                 }
-                scope.collapse = function(){
+                scope.collapse = function () {
                     scope.expanded = false;
                     event.stopPropagation();
                     event.preventDefault();
