@@ -29,6 +29,7 @@ To see a demo go here: http://ghiden.github.io/angucomplete-alt
     * bind an object: it works as regular two-way-data-binding
     * callback function: when a selection is made by user, this callback is called with the selected object. Thanks to @nekcih for proposing this feature.
     * Another callback function: when the input value changes.
+    * Short the result and show the entire text with bootstrap accordion
 
 ### Getting Started
 Download the package, and include the angucomplete-alt.js file in your page.
@@ -99,3 +100,4 @@ var app = angular.module('app', ["angucomplete-alt"]);
 | sub-max-title | option to short the string. number of characteres of separation from the match to the right side of the string | No | 400 |
 | sub-min-description | same of sub-min-title for description | No | 400 |
 | sub-max-description | same of sub-max-title for description | No | 400 |
+| show-more | hide the full text (when you are using any shorting from above) and show it with a bootstrap accordion | No | 400 |
