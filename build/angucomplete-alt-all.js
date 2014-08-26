@@ -544,8 +544,8 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
                         name: 'ui.bootstrap',
                         files: ['../bower_components/angular-bootstrap/ui-bootstrap-tpls.js']
                     },{
-                        files: ['../bower_components/bootstrap/dist/js/bootstrap.js',
-                            '../bower_components/bootstrap/dist/css/bootstrap.css',
+                        files: [
+                            '../bower_components/bootstrap/dist/css/bootstrap.css'
                         ]
                     }]);
                 }
