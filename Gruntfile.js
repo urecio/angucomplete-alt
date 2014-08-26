@@ -65,7 +65,7 @@ module.exports = function (grunt) {
     };
 
     // Register tasks
-    grunt.registerTask('default', ['jshint', 'karma:unit']);
+    grunt.registerTask('default', ['jshint', 'karma:unit', 'concat:dist']);
     grunt.registerTask('watch', ['jshint', 'karma:watch']);
     grunt.registerTask('makedist',['concat']);
 
