@@ -42,14 +42,15 @@
 
 .angucomplete-image-holder {
     padding-top: 2px;
-    float: left;
+    display:inline-block;
     margin-right: 10px;
-    margin-left: 5px;
+    margin-left: 3px;
+    width: 10%;
+    vertical-align: top;
 }
 
 .angucomplete-image {
-    height: 34px;
-    width: 34px;
+    width: 100%;
     border-radius: 50%;
     border-color: #ececec;
     border-style: solid;
@@ -104,9 +105,25 @@
     font-size: 12px;
     color: #87A0A0;
 }
-.angucomplete-row .collapse.in{
-    border-top:5px solid lighten($vd2-dark-grey,10%);
+.show-more {
+    float:right;
 }
-.angucomplete-row .panel-default > .panel-heading + .panel-collapse > .panel-body{
-    border-top-color:darken($vd2-medium-grey,0%);
+.title-description-more {
+    clear:right;
+    margin-top: 20px;
+}
+.title-description {
+    display:inline-block;
+    width: 85%;
+}
+.angucomplete-title {
+    font-weight: bold;
+}
+
+
+@media (max-width: 767px) {
+
+    .angucomplete-dropdown {
+        width: 95%;
+    }
 }

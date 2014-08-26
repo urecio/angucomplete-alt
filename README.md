@@ -1,16 +1,15 @@
 angucomplete-alt
 ============
 
-This is a fork of Daryl Rowland's angucomplete (https://github.com/darylrowland/angucomplete) with a bit of tweaks such as:  
+This is a fork of Hidenari Nozaki's angucomplete-alt (https://github.com/darylrowland/angucomplete) with a bit of tweaks such as:
 
-* change long attribute names to hyphenated ones
-* coding style similar to angular standard
-* more refactored in general
-* created factory with some methods to be able to inject them
-* jshint
-* more test coverage
+    * callback function: when a selection is made by user, this callback is called with the selected object. Thanks to @nekcih for proposing this feature.
+    * Another callback function: when the input value changes.
+    * Short the result and show the entire text with bootstrap accordion
+    * loading bar. Thanks to @chieffancypants and his angular-loading-bar
 
 To see a demo go here: http://ghiden.github.io/angucomplete-alt
+Note this is the old demo version. If you want to see the final example, check /example
 
 ###Key Features
 * Show just a title, a title and a description or a title, description and image in your autocomplete list
@@ -18,21 +17,21 @@ To see a demo go here: http://ghiden.github.io/angucomplete-alt
 * Reads JSON data and allows you to specify which fields to use for display
 * Simple setup - e.g. to pull data from a server, just set the url parameter
 * Using the built in directives of angular (keyup) instead of jquery, to avoid many scope digests
-
-### Extra Features
 * Request format function: if you need to tweak data before you send to your search API, you can set your own format function. Search query goes through your function and gets sent to your API.
 * Response format function: if you need to tweak response from the server before it gets processed by the directive, you can set your own format function. Raw HTTP response goes through your function. Thanks to @nekcih for proposing this feature.
 * Clear on selection: when you select an item, input field is cleared.
 * Blur event handling, thanks to @leejsinclair
 * Override suggestions
 * You can either bind an object or callback function
-    * bind an object: it works as regular two-way-data-binding
-    * callback function: when a selection is made by user, this callback is called with the selected object. Thanks to @nekcih for proposing this feature.
-    * Another callback function: when the input value changes.
-    * Short the result and show the entire text with bootstrap accordion
+* bind an object: it works as regular two-way-data-binding
+* callback function: when a selection is made by user, this callback is called with the selected object. Thanks to @nekcih for proposing this feature.
+* Another callback function: when the input value changes.
+* Short the result and show the entire text with bootstrap accordion
+* loading bar. Thanks to @chieffancypants and his angular-loading-bar
+
 
 ### Getting Started
-Download the package, and include the angucomplete-alt.js file in your page.
+Download the package, and include the angucomplete-alt-all.js file in your page.
 
 ```bash
 bower install angucomplete-alt --save
@@ -43,6 +42,9 @@ Then add the angucomplete-alt module to your Angular App file, e.g.
 ```js
 var app = angular.module('app', ["angucomplete-alt"]);
 ```
+
+Optionally you can use bootstrap accordion for the show more functionality. To enable:
+```use-bootstrap="true"```
 
 ### Local Usage
 
@@ -100,4 +102,5 @@ var app = angular.module('app', ["angucomplete-alt"]);
 | sub-max-title | option to short the string. number of characteres of separation from the match to the right side of the string | No | 400 |
 | sub-min-description | same of sub-min-title for description | No | 400 |
 | sub-max-description | same of sub-max-title for description | No | 400 |
-| show-more | hide the full text (when you are using any shorting from above) and show it with a bootstrap accordion | No | 400 |
+| show-more | hide the full text (when you are using any shorting from above) and show it with a bootstrap accordion | No | false |
+| use-bootstrap | Possibility to use bootstrap for the accordion effect when show-more is enabled | No | false |
