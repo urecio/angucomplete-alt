@@ -82,6 +82,15 @@ Optionally you can use bootstrap accordion for the show more functionality. To e
               input-class="form-control form-control-small"/>
 ```
 
+### Loading bar
+
+Note that the loading bar is not automatically included, in order to give the possibility to place it anywhere.
+To enable:
+* Create a container for it
+* Reference that container like:
+```cfpLoadingBarProvider.parentSelector = '#search-bar';```
+For more info, check the angular-loading-bar project: https://github.com/urecio/angular-loading-bar.git
+
 ### Description of attributes
 | Attribute        | Description           | Required | Example  |
 | :------------- |:-------------| :-----:| :-----|
