@@ -13,6 +13,7 @@
   "devDependencies": {
     "async": "0.1.x",
     "grunt": "~0.4.1",
+    "grunt-concat-css": "^0.3.1",
     "grunt-contrib-concat": "^0.5.0",
     "grunt-contrib-jshint": "~0.10.0",
     "grunt-contrib-watch": "~0.5.3",

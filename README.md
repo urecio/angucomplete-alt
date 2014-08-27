@@ -44,6 +44,13 @@ var app = angular.module('app', ["angucomplete-alt"]);
 ```
 
 Optionally you can use bootstrap accordion for the show more functionality. To enable:
+* Include js libraries and css like:
+```
+<link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.css"/>
+<script src="../bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+```
+* Inject ui.bootstrap module to your dependencies
+* Enable the option in the directive:
 ```use-bootstrap="true"```
 
 ### Local Usage

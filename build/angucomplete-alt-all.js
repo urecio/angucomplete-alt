@@ -166,13 +166,18 @@ angular.module('cfp.loadingBar', [])
     this.startSize = 0.02;
     this.parentSelector = 'body';
     this.spinnerTemplate = '<div id="loading-bar-spinner"><div class="spinner-icon"></div></div>';
+    this.spinnerOnlyClass = '';
+    this.spinnerSelector = this.parentSelector;
 
     this.$get = ['$document', '$timeout', '$animate', '$rootScope', function ($document, $timeout, $animate, $rootScope) {
 
       var $parentSelector = this.parentSelector,
         loadingBarContainer = angular.element('<div id="loading-bar"><div class="bar"><div class="peg"></div></div></div>'),
         loadingBar = loadingBarContainer.find('div').eq(0),
-        spinner = angular.element(this.spinnerTemplate);
+        loadingBarPeg = loadingBarContainer.find('div').eq(1),
+        spinner = angular.element(this.spinnerTemplate),
+          spinnerSelector = this.spinnerSelector,
+          spinnerOnlyClass = this.spinnerOnlyClass;
 
       var incTimeout,
         completeTimeout,
@@ -187,7 +192,8 @@ angular.module('cfp.loadingBar', [])
        * Inserts the loading bar element into the dom, and sets it to 2%
        */
       function _start() {
-        var $parent = $document.find($parentSelector);
+        var $parent = angular.element(document.querySelector($parentSelector));
+        var spinnerParent = angular.element(document.querySelector(spinnerSelector));
         $timeout.cancel(completeTimeout);
 
         // do not continually broadcast the started event:
@@ -203,7 +209,11 @@ angular.module('cfp.loadingBar', [])
         }
 
         if (includeSpinner) {
-          $animate.enter(spinner, $parent);
+            if(spinnerOnlyClass===''){
+                $animate.enter(spinner, spinnerParent);
+            }else{
+            angular.element(spinnerParent).addClass(spinnerOnlyClass);
+            }
         }
 
         _set(startSize);
@@ -282,7 +292,9 @@ angular.module('cfp.loadingBar', [])
             status = 0;
             started = false;
           });
-          $animate.leave(spinner);
+          $animate.leave(spinner,function(){
+              angular.element(document.querySelector(spinnerSelector)).removeClass(spinnerOnlyClass);
+          });
         }, 500);
       }
 
@@ -295,7 +307,9 @@ angular.module('cfp.loadingBar', [])
         includeSpinner   : this.includeSpinner,
         latencyThreshold : this.latencyThreshold,
         parentSelector   : this.parentSelector,
-        startSize        : this.startSize
+        startSize        : this.startSize,
+        spinnerOnlyClass : this.spinnerOnlyClass,
+        spinnerSelector  : this.spinnerSelector
       };
 
 
@@ -315,7 +329,7 @@ angular.module('cfp.loadingBar', [])
 
 'use strict';
 
-angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
+angular.module('angucomplete-alt', ['angular-loading-bar'])
     .factory('extractor', function () {
         function extractValue(obj, key) {
             var keys, result;
@@ -433,7 +447,7 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
             return $sce.trustAsHtml(result);
         };
     }])
-    .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', '$ocLazyLoad', function ($parse, $http, $timeout, extractor, $ocLazyLoad) {
+    .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
         var KEY_DW = 40,
             KEY_UP = 38,
             KEY_ES = 27,
@@ -523,7 +537,6 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
                 '  </div>' +
                 '</div>',
             link: function (scope, elem, attrs) {
-                //todo: document the showMore functionality
                 //todo: test for local json
                 var minlength = MIN_LENGTH,
                     lastSearchTerm = null,
@@ -537,18 +550,6 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
                 scope.searchStr = null;
                 scope.suggestion = false;
                 scope.unreachable = false;
-
-                //lazy loading bootstrap staff if its needed
-                if(scope.useBootstrap){
-                    $ocLazyLoad.load([{
-                        name: 'ui.bootstrap',
-                        files: ['../bower_components/angular-bootstrap/ui-bootstrap-tpls.js']
-                    },{
-                        files: [
-                            '../bower_components/bootstrap/dist/css/bootstrap.css'
-                        ]
-                    }]);
-                }
 
                 scope.dropClick = function (){
                     scope.isDropClick = true;

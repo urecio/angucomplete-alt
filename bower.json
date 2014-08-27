@@ -25,8 +25,7 @@
     "angular": ">=1.2.0",
     "angular-bootstrap": "~0.11.0",
     "bootstrap": "~3.2.0",
-    "angular-loading-bar": "https://github.com/urecio/angular-loading-bar.git#~0.5.1",
-    "ocLazyLoad": "~0.3.3"
+    "angular-loading-bar": "https://github.com/urecio/angular-loading-bar.git#0.5.2"
   },
   "devDependencies": {
     "angular-mocks": ">=1.2.0",

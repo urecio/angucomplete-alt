@@ -18,6 +18,11 @@ module.exports = function (grunt) {
                 dest: 'build/angucomplete-alt-all.js'
             }
         },
+        concat_css: {
+            all: {
+                files: {"build/angucomplete-alt-all.css":['bower_components/angular-loading-bar/build/loading-bar.css','angucomplete-alt.css']},
+            }
+        },
         watch: {
             test: {
                 // Lint & run unit tests in Karma
@@ -65,9 +70,9 @@ module.exports = function (grunt) {
     };
 
     // Register tasks
-    grunt.registerTask('default', ['jshint', 'karma:unit', 'concat:dist']);
+    grunt.registerTask('default', ['jshint', 'karma:unit', 'makedist']);
     grunt.registerTask('watch', ['jshint', 'karma:watch']);
-    grunt.registerTask('makedist',['concat']);
+    grunt.registerTask('makedist',['concat','concat_css']);
 
     grunt.initConfig(initConfig);
 };

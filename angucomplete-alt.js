@@ -10,7 +10,7 @@
 
 'use strict';
 
-angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
+angular.module('angucomplete-alt', ['angular-loading-bar'])
     .factory('extractor', function () {
         function extractValue(obj, key) {
             var keys, result;
@@ -128,7 +128,7 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
             return $sce.trustAsHtml(result);
         };
     }])
-    .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', '$ocLazyLoad', function ($parse, $http, $timeout, extractor, $ocLazyLoad) {
+    .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
         var KEY_DW = 40,
             KEY_UP = 38,
             KEY_ES = 27,
@@ -218,7 +218,6 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
                 '  </div>' +
                 '</div>',
             link: function (scope, elem, attrs) {
-                //todo: document the showMore functionality
                 //todo: test for local json
                 var minlength = MIN_LENGTH,
                     lastSearchTerm = null,
@@ -232,18 +231,6 @@ angular.module('angucomplete-alt', ['oc.lazyLoad','angular-loading-bar'])
                 scope.searchStr = null;
                 scope.suggestion = false;
                 scope.unreachable = false;
-
-                //lazy loading bootstrap staff if its needed
-                if(scope.useBootstrap){
-                    $ocLazyLoad.load([{
-                        name: 'ui.bootstrap',
-                        files: ['../bower_components/angular-bootstrap/ui-bootstrap-tpls.js']
-                    },{
-                        files: [
-                            '../bower_components/bootstrap/dist/css/bootstrap.css'
-                        ]
-                    }]);
-                }
 
                 scope.dropClick = function (){
                     scope.isDropClick = true;
