@@ -44,12 +44,6 @@ module.exports = function (grunt) {
             },
             unit: {
                 singleRun: true
-            },
-            watch: {
-                autoWatch: true
-            },
-            server: {
-                background: true
             }
         },
         jshint: {

@@ -3,10 +3,7 @@
 describe('angucomplete-alt', function() {
   var $compile, $scope, $timeout;
   var KEY_DW = 40,
-      KEY_UP = 38,
-      KEY_ES = 27,
-      KEY_EN = 13,
-      KEY_BS =  8;
+      KEY_EN = 13;
 
   beforeEach(module('angucomplete-alt'));
 
@@ -98,7 +95,6 @@ describe('angucomplete-alt', function() {
       var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" minlength="1"/>');
       $compile(element)($scope);
       $scope.$digest();
-
       var name = 'John';
       var responseData = [ {name: name} ];
       element.isolateScope().processResults(responseData);
@@ -211,53 +207,56 @@ describe('angucomplete-alt', function() {
         $compile(element)($scope);
         $scope.$digest();
 
-        var queryTerm = 'al';
+        element.isolateScope().searchStr = 'al';
         spyOn(element.isolateScope(), 'processResults');
-        element.isolateScope().searchTimerComplete(queryTerm);
-        expect(element.isolateScope().processResults).toHaveBeenCalledWith($scope.countries.slice(1,3), queryTerm);
+
+        element.isolateScope().searchTimerComplete();
+        expect(element.isolateScope().processResults).toHaveBeenCalledWith($scope.countries.slice(1,3));
       });
     });
 
     describe('remote API', function() {
+        var search = 'john', results = {data: [{name: 'john'}]};
 
       it('should call $http with given url and param', inject(function($httpBackend) {
-        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
+        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
         $compile(element)($scope);
         $scope.$digest();
 
-        var queryTerm = 'john';
-        var results = {data: [{name: 'john'}]};
+        element.isolateScope().searchStr = search;
         spyOn(element.isolateScope(), 'processResults');
-        $httpBackend.expectGET('names?q=' + queryTerm).respond(200, results);
-        element.isolateScope().searchTimerComplete(queryTerm);
+        $httpBackend.expectGET('search?q='+search).respond(200, results);
+        element.isolateScope().searchTimerComplete();
         $httpBackend.flush();
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
+
+          $httpBackend.verifyNoOutstandingExpectation();
+          $httpBackend.verifyNoOutstandingRequest();
       }));
 
-      it('should set $scope.searching to false and call $scope.processResults after success', inject(function($httpBackend) {
-        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
-        $compile(element)($scope);
-        $scope.$digest();
+      it('should set $scope.searching to false and call $scope.processData after success', inject(function($httpBackend) {
+          var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
+          $compile(element)($scope);
+          $scope.$digest();
 
-        var queryTerm = 'john';
-        var results = {data: [{name: 'john'}]};
-        spyOn(element.isolateScope(), 'processResults');
-        $httpBackend.expectGET('names?q=' + queryTerm).respond(200, results);
-        element.isolateScope().searchTimerComplete(queryTerm);
-        $httpBackend.flush();
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
-        expect(element.isolateScope().processResults).toHaveBeenCalledWith(results.data, queryTerm);
-        expect(element.isolateScope().searching).toBe(false);
+          element.isolateScope().searchStr = search;
+          spyOn(element.isolateScope(), 'processData');
+          $httpBackend.expectGET('search?q='+search).respond(200, results);
+          element.isolateScope().searchTimerComplete();
+          $httpBackend.flush();
+          element.isolateScope().processResults(results);
+          expect(element.isolateScope().processData).toHaveBeenCalledWith(results.data);
+
+          $httpBackend.verifyNoOutstandingExpectation();
+          $httpBackend.verifyNoOutstandingRequest();
+
       }));
 
-      it('should call $scope.processResults with more than one level deep of data attribute', inject(function($httpBackend) {
-        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="name" remote-url-data-field="search.data" title-field="name" minlength="1"/>');
+      it('should call $scope.processData with more than one level deep of data attribute', inject(function($httpBackend) {
+        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="search.data" title-field="name" minlength="1"/>');
         $compile(element)($scope);
         $scope.$digest();
 
-        var queryTerm = 'john';
+        element.isolateScope().searchStr = 'john';
         var results = {
           meta: {
             offset: 0,
@@ -270,24 +269,25 @@ describe('angucomplete-alt', function() {
             ]
           }
         };
-        spyOn(element.isolateScope(), 'processResults');
-        $httpBackend.expectGET('names?q=' + queryTerm).respond(200, results);
-        element.isolateScope().searchTimerComplete(queryTerm);
+        spyOn(element.isolateScope(), 'processData');
+        $httpBackend.expectGET('search?q=' + element.isolateScope().searchStr).respond(200, results);
+        element.isolateScope().searchTimerComplete();
         $httpBackend.flush();
+          element.isolateScope().processResults(results);
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
-        expect(element.isolateScope().processResults).toHaveBeenCalledWith(results.search.data, queryTerm);
-        expect(element.isolateScope().processResults.mostRecentCall.args[0]).toEqual(results.search.data);
+        expect(element.isolateScope().processData).toHaveBeenCalledWith(results.search.data);
+        expect(element.isolateScope().processData.mostRecentCall.args[0]).toEqual(results.search.data);
         expect(element.isolateScope().searching).toBe(false);
       }));
 
       it('should not throw an exception when match-class is set and remote api returns bogus results (issue #2)', inject(function($httpBackend) {
-        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="name" remote-url-data-field="data" title-field="name" description="type" minlength="1" match-class="highlight"/>');
+        var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" description="type" minlength="1" match-class="highlight"/>');
         $compile(element)($scope);
         $scope.$digest();
 
         var results = {data: [{name: 'tim', type: 'A'}]};
-        $httpBackend.expectGET('names?q=a').respond(200, results);
+        $httpBackend.expectGET('search?q=a').respond(200, results);
 
         var inputField = element.find('#ex1_value');
         var e = $.Event('keyup');
@@ -304,23 +304,30 @@ describe('angucomplete-alt', function() {
         expect(element.isolateScope().searching).toBe(false);
       }));
     });
+      describe("filter", function () {
+          it("should short a string its length is greater than the range of subMin and subMax ", inject(function (highlightFilter,$sce) {
+             expect($sce.getTrustedHtml(highlightFilter('paco el flaco', 'el', 'class', 3, 3))).toBe('...co <span class="class">el</span> fl...');
+          }));
+      });
   });
 
   describe('custom data function for ajax request', function() {
+
     it('should call the custom data function for ajax request if it is given', inject(function($httpBackend) {
       var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names" search-fields="name" remote-url-data-field="data" remote-url-request-formatter="dataFormatFn" title-field="name" minlength="1"/>');
-      var sequenceNum = 1234567890;
+      var sequenceNum = 1234567890,
+      query = 'john';
       $scope.dataFormatFn = function(str) {
         return {q: str, sequence: sequenceNum};
       };
       $compile(element)($scope);
       $scope.$digest();
 
-      var queryTerm = 'john';
+        element.isolateScope().searchStr = query;
       var results = {data: [{name: 'john'}]};
-      spyOn(element.isolateScope(), 'processResults');
-      $httpBackend.expectGET('names?q=' + queryTerm + '&sequence=' + sequenceNum).respond(200, results);
-      element.isolateScope().searchTimerComplete(queryTerm);
+      spyOn(element.isolateScope(), 'processData');
+      $httpBackend.expectGET('names?q=' + query + '&sequence=' + sequenceNum).respond(200, results);
+      element.isolateScope().searchTimerComplete(query);
       $httpBackend.flush();
       $httpBackend.verifyNoOutstandingExpectation();
       $httpBackend.verifyNoOutstandingRequest();
@@ -330,18 +337,20 @@ describe('angucomplete-alt', function() {
   describe('custom data formatter function for ajax response', function() {
     it('should not run response data through formatter if not given', inject(function($httpBackend) {
       var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="first" remote-url-data-field="data" title-field="name" minlength="1"/>');
-      $compile(element)($scope);
+      var query = 'john';
+        $compile(element)($scope);
       $scope.$digest();
 
-      var queryTerm = 'john';
+        element.isolateScope().searchStr = query;
       var results = {data: [{first: 'John', last: 'Doe'}]};
-      spyOn(element.isolateScope(), 'processResults');
-      $httpBackend.expectGET('names?q=' + queryTerm).respond(200, results);
-      element.isolateScope().searchTimerComplete(queryTerm);
+      spyOn(element.isolateScope(), 'processData');
+      $httpBackend.expectGET('names?q=' + query).respond(200, results);
+      element.isolateScope().searchTimerComplete();
       $httpBackend.flush();
+        element.isolateScope().processResults(results);
       $httpBackend.verifyNoOutstandingExpectation();
       $httpBackend.verifyNoOutstandingRequest();
-      expect(element.isolateScope().processResults).toHaveBeenCalledWith([{first: 'John', last: 'Doe'}], queryTerm);
+      expect(element.isolateScope().processData).toHaveBeenCalledWith(results.data);
     }));
 
     it('should run response data through formatter if given', inject(function($httpBackend) {
@@ -356,22 +365,25 @@ describe('angucomplete-alt', function() {
       $compile(element)($scope);
       $scope.$digest();
 
-      var queryTerm = 'john';
+        var query = 'john';
+        element.isolateScope().searchStr = query;
       var results = {data: [{first: 'John', last: 'Doe'}]};
-      spyOn(element.isolateScope(), 'processResults');
-      $httpBackend.expectGET('names?q=' + queryTerm).respond(200, results);
-      element.isolateScope().searchTimerComplete(queryTerm);
+      spyOn(element.isolateScope(), 'processData');
+      $httpBackend.expectGET('names?q=' + query).respond(200, results);
+      element.isolateScope().searchTimerComplete();
       $httpBackend.flush();
+        element.isolateScope().processResults(results);
       $httpBackend.verifyNoOutstandingExpectation();
       $httpBackend.verifyNoOutstandingRequest();
-      expect(element.isolateScope().processResults).toHaveBeenCalledWith([{first: 'John', last: 'Doe', name: 'Doe, John'}], queryTerm);
+      expect(element.isolateScope().processData).toHaveBeenCalledWith(results.data);
     }));
   });
 
   describe('clear result', function() {
     it('should clear input when clear-selected is true', function() {
       var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>');
-      $scope.selectedCountry = undefined;
+
+        $scope.selectedCountry = undefined;
       $scope.countries = [
         {name: 'Afghanistan', code: 'AF'},
         {name: 'Aland Islands', code: 'AX'},
@@ -383,16 +395,14 @@ describe('angucomplete-alt', function() {
       var inputField = element.find('#ex1_value');
       var eKeyup = $.Event('keyup');
       eKeyup.which = 97; // letter: a
-
       inputField.val('a');
       inputField.trigger('input');
       inputField.trigger(eKeyup);
       $timeout.flush();
       expect(element.find('#ex1_dropdown').length).toBe(1);
 
-      var eKeydown = $.Event('keydown');
-      eKeydown.which = KEY_DW;
-      inputField.trigger(eKeydown);
+        eKeyup.which = KEY_DW;
+      inputField.trigger(eKeyup);
       expect(element.isolateScope().currentIndex).toBe(0);
 
       eKeyup.which = KEY_EN;
@@ -424,9 +434,9 @@ describe('angucomplete-alt', function() {
       inputField.trigger(e);
       $timeout.flush();
       expect(element.find('#ex1_dropdown').length).toBe(1);
-
       inputField.blur();
       expect(element.find('#ex1_dropdown').length).toBe(1);
+
       $timeout.flush();
       expect(element.find('#ex1_dropdown').length).toBe(0);
     });
@@ -546,10 +556,11 @@ describe('angucomplete-alt', function() {
       $timeout.flush();
       expect(element.find('#ex1_dropdown').length).toBe(1);
 
-      var eKeydown = $.Event('keydown');
-      eKeydown.which = KEY_DW;
-      element.trigger(eKeydown);
+        eKeyup.which = KEY_DW;
+        inputField.trigger(eKeyup);
       expect(element.isolateScope().currentIndex).toBe(0);
+
+
 
       eKeyup.which = KEY_EN;
       inputField.trigger(eKeyup);

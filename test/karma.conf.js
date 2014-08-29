@@ -8,6 +8,14 @@ module.exports = function(config) {
         // frameworks to use
         frameworks: ['jasmine'],
 
+        //coverage reporter type
+        coverageReporter: {
+            type : 'html',
+            dir  : 'test/coverage'
+        },
+        preprocessors: {
+            'angucomplete-alt.js': 'coverage'
+        },
         // list of files / patterns to load in the browser
         files: [
             // Dependencies
@@ -31,7 +39,7 @@ module.exports = function(config) {
 
         // test results reporter to use
         // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
-        reporters: ['progress'],
+        reporters: ['progress','coverage'],
 
         // web server port
         port: 9876,
@@ -55,6 +63,12 @@ module.exports = function(config) {
         // - PhantomJS
         // - IE (only Windows)
         browsers: ['Chrome'],
+
+        plugins: [
+            'karma-phantomjs-launcher',
+            'karma-jasmine',
+            'karma-coverage'
+        ],
 
         // If browser does not capture in given timeout [ms], kill it
         captureTimeout: 60000,
