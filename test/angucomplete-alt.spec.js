@@ -305,9 +305,36 @@ describe('angucomplete-alt', function() {
       }));
     });
       describe("filter", function () {
-          it("should short a string its length is greater than the range of subMin and subMax ", inject(function (highlightFilter,$sce) {
-             expect($sce.getTrustedHtml(highlightFilter('paco el flaco', 'el', 'class', 3, 3))).toBe('...co <span class="class">el</span> fl...');
+          var highlight, sce;
+          beforeEach(inject(function ($injector) {
+              highlight = $injector.get('highlightFilter');
+                  sce = $injector.get('$sce');
           }));
+          it("should short a string its length is greater than the range of subMin and subMax ", function () {
+             expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', 3, 3))).toBe('...co <span class="class">el</span> fl...');
+          });
+          it("should change submin to 0 when it's bellow the index of the match ", function () {
+
+              expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', 12, 3))).toBe('paco <span class="class">el</span> fl...');
+          });
+          it("shouldn't short the string on the left if submin is not defined ", function () {
+              expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', null, 3))).toBe('paco <span class="class">el</span> fl...');
+          });
+          it("shouldn't short the string on the right if submax is not defined ", function () {
+              expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', 3, null))).toBe('...co <span class="class">el</span> flaco');
+          });
+          it("shouldn't do anything if there is no target", function () {
+              expect(highlight(null, 'el', 'class', 3, 3)).toBeUndefined();
+          });
+          it("should take 0 as index and sum submin and submax if there isn't match", function () {
+              expect((highlight('paco el flaco', 'raa', 'class', 2, 1))).toBe('pac...');
+          });
+          it("shouldn't repeat '...' on the begining of the second shorting", function () {
+              expect(sce.getTrustedHtml((highlight('paco el flaco, paco el flaco', 'el', 'class', 3, 3)))).toBe('...co <span class="class">el</span> fl...co <span class="class">el</span> fl...');
+          });
+          it("shouldn't cut the string on the second match, even if the submin is higher than the min index", function () {
+              expect(sce.getTrustedHtml((highlight('paco el flaco, paco el flaco', 'el', 'class', 12, 3)))).toBe('paco <span class="class">el</span> fl...paco <span class="class">el</span> fl...');
+          });
       });
   });
 

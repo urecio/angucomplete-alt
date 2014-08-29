@@ -63,8 +63,9 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     if (subMinIndex <= 0){
                         begining = '';
                         subMinIndex = 0;
+                        subMin = index;
                     } else if(lastSubMax !== -1){
-                        subMinIndex = lastSubMax;
+                        lastSubMax = subMax;
                         begining = '';
                     } else {
                         begining = '...';
@@ -72,36 +73,37 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                     if (subMax) {
 
-                        subMax = subMin + str.length + subMax;
-                        subMaxIndex = subMinIndex + subMax;
+                        lastSubMax = subMin + str.length + subMax;
+                        subMaxIndex = subMinIndex + lastSubMax;
                         ending = (subMaxIndex < target.length) ? '...' : '';
 
-                        result += begining + target.substr(subMinIndex, subMax) + ending;
+                        result += begining + target.substr(subMinIndex, lastSubMax) + ending;
 
-                        lastSubMax = subMax;
                     } else {
 
                         result += begining + target.substr(subMinIndex);
 
                     }
-                } else if (subMax) {
+                } else if (subMax && index !== -1) {
 
-                    subMax =  str.length - 1 + subMax;
+                    subMax = index + str.length + subMax;
                     ending = (subMax < target.length) ? '...' : '';
 
                     result += target.substr(0, subMax) + ending;
 
                     lastSubMax = subMax;
 
-                } else {
+                } else if(subMax){
 
+
+                    ending = (subMax < target.length) ? '...' : '';
+
+                    result += target.substr(0, subMax) + ending;
+
+                    lastSubMax = subMax;
+
+                }else{
                     result = target;
-
-                }
-                if (matchClass){
-
-                    result = result.replace(re,
-                        '<span class="' + matchClass + '">' + str + '</span>');
                 }
 
             };
@@ -112,20 +114,26 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
             index = target.toLowerCase().indexOf(str.toLowerCase());
             if (index !== -1) {
+
                 extractString();
                 lastIndex = target.toLowerCase().lastIndexOf(str.toLowerCase());
                 if (lastIndex !== -1 && lastIndex !== index) {
                     index = lastIndex;
+
                     extractString();
                 }
+                if (matchClass && index !== -1){
 
+                    result = result.replace(re,
+                        '<span class="' + matchClass + '">' + str + '</span>');
+                }
             }
             else {
                 subMax += subMin;
                 subMin = 0;
                 extractString();
             }
-            return $sce.trustAsHtml(result);
+            return (index!==-1)?$sce.trustAsHtml(result):result;
         };
     }])
     .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
