@@ -68,6 +68,7 @@ module.exports = function (grunt) {
                 dest: 'CHANGELOG.md'
             }
         }
+
     };
 
     // Register tasks

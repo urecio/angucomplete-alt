@@ -18,6 +18,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 keys = key.split('.');
                 result = obj;
                 keys.forEach(function (k) {
+
                     result = result[k];
                 });
             }
@@ -133,7 +134,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 subMin = 0;
                 extractString();
             }
-            return (index!==-1)?$sce.trustAsHtml(result):result;
+            return $sce.trustAsHtml(result);
         };
     }])
     .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
@@ -174,7 +175,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 minlength: '@',
                 matchClass: '@',
                 clearSelected: '@',
-                overrideSuggestions: '@',
+                overrideResults: '@',
                 customProcessing: '=',
                 suggestionsProperty: '@',
                 maxWaitTime: '@',
@@ -191,7 +192,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 '    <div class="angucomplete-searching" ng-show="typemore">Type more...</div>' +
                 '    <div class="angucomplete-searching" ng-show="unreachable">Please, try again later...</div>' +
                 '    <div class="angucomplete-searching" ng-show="!unreachable && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults">No results found</div>' +
-                '    <div class="angucomplete-searching" ng-show="suggestion">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ searchStr }}</span> </div>' +
+                '    <div class="angucomplete-searching" ng-show="suggestion">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ suggestion }}</span> </div>' +
                 '    <div class="angucomplete-row" ng-if="!typemore" ng-repeat="result in results" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
                 ' <div class="clickable" ng-click="selectResult(result)">' +
                 '    <div ng-if="imageField" class="angucomplete-image-holder">' +
@@ -204,7 +205,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 '</div>' +
                 '</div>' +
                 '<div ng-if="(subMinTitle || subMaxTitle || subMinDescription || subMaxDescription) && showMore && !useBootstrap">' +
-                '  <a class="show-more" ng-click="isOpen=!isOpen">{{isOpen ? "Show less..." : "Show more..."}}</a>' +
+                '  <a id="show-more" class="show-more" ng-click="isOpen=!isOpen">{{isOpen ? "Show less..." : "Show more..."}}</a>' +
                 '<div class="title-description-more" ng-show="isOpen">' +
                 '  <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass"></div>' +
                 '  <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass"></div>' +
@@ -244,7 +245,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     scope.isDropClick = true;
 
                 };
-
                 var callOrAssign = function (value) {
                     if (typeof scope.selectedObject === 'function') {
                         scope.selectedObject(value);
@@ -320,8 +320,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     scope.clearSelected = false;
                 }
 
-                if (!scope.overrideSuggestions) {
-                    scope.overrideSuggestions = false;
+                if (!scope.overrideResults) {
+                    scope.overrideResults = false;
                 }
 
 
@@ -339,12 +339,10 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     }else{
                         var x =window.scrollX,y = window.scrollY;
 
-                        $timeout(function () {
 
-                            elem.find('#'+scope.id+'_value').focus();
-                            window.scrollTo(x,y);
-                            scope.isDropClick=false;
-                        }, 0, false);
+                        elem.find('#'+scope.id+'_value').focus();
+                        window.scrollTo(x,y);
+                        scope.isDropClick=false;
 
                     }
 
@@ -352,7 +350,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 };
                 scope.resetHideResults = function () {
-
                     if (hideTimer) {
                         $timeout.cancel(hideTimer);
                     }
@@ -364,7 +361,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     angular.forEach(responseData, function (object) {
 
                         if (scope.customProcessing) {
-
                             object = scope.customProcessing(object);
                         }
                         if (scope.titleField && scope.titleField !== '') {
@@ -397,20 +393,18 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 };
 
                 scope.processResults = function (responseData) {
-
-                    var dataFormatted = responseFormatter(responseData),
-                        data;
+                    var dataFormatted = responseFormatter(responseData);
+                    var suggestions = extractor.extractValue(dataFormatted, scope.suggestionsProperty);
                     scope.results = [];
                     //todo: test the suggestions
-                    if (extractor.extractValue(dataFormatted, scope.suggestionsProperty)) {
-
-                        data = extractor.extractValue(dataFormatted, scope.remoteUrlDataField);
-                        scope.suggestion = extractor.extractValue(data, scope.titleField);
+                    if (suggestions !== '') {
+                        scope.showDropdown = true;
+                        scope.suggestion = suggestions;
                         scope.searching = false;
+                        scope.processData(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
                     } else if(extractor.extractValue(dataFormatted, scope.remoteUrlDataField)) {
                         scope.processData(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
                     } else {
-
                         scope.processData(dataFormatted);
                     }
 
@@ -418,11 +412,9 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 scope.searchTimerComplete = function () {
                     // Begin the search
-
                     var searchFields, matches, i, match, s, params;
                     if (scope.searchStr.length >= minlength) {
-
-                        if (scope.localData) {
+                        if (scope.localData) {//suggestions not working here
 
                             searchFields = scope.searchFields.split(',');
 
@@ -430,7 +422,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                             for (i = 0; i < scope.localData.length; i++) {
                                 match = false;
-
                                 for (s = 0; s < searchFields.length; s++) {
                                     match = match || (scope.localData[i][searchFields[s]].toLowerCase().indexOf(scope.searchStr.toLowerCase()) >= 0);
                                 }
@@ -447,6 +438,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                             params = scope.remoteUrlRequestFormatter(scope.searchStr);
                             $http.get(scope.remoteUrl, {timeout: scope.maxWaitTime, params: params}).
                                 success(function (responseData, status, headers, config) {
+
                                     scope.processResults(responseData);
                                 }).
                                 error(function (data, status, headers, config) {
@@ -464,10 +456,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         } else {
                             $http.get(scope.remoteUrl + scope.searchStr, {timeout: scope.maxWaitTime}).
                                 success(function (responseData, status, headers, config) {
-
-                                    scope.processResults(
-                                        extractor.extractValue(responseData)
-                                    );
+                                    scope.processResults(responseData);
                                 }).
                                 error(function (data, status, headers, config) {
 
@@ -546,7 +535,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                             event.preventDefault();
                         } else {
                             event.preventDefault();
-                            if (scope.overrideSuggestions) {
+                            if (scope.overrideResults) {
                                 setInputString(scope.searchStr);
                             }
                             else {
