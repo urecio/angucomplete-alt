@@ -525,7 +525,11 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
 
                 scope.keyUp = function (event) {
-                    if(event.which !== KEY_UP && event.which !== KEY_EN && event.which !== KEY_ES && (event.which !== KEY_DW || !scope.showDropdown)){
+
+                    if([KEY_UP,KEY_EN,KEY_ES,KEY_BS,KEY_DEL].indexOf(event.which) === -1 && (event.which !== KEY_DW || !scope.showDropdown)){
+//                        if the key pressed is not in the array
+//                        if it is arrow down, should only pass when the dropdown is false
+
                         search(event);
                     } else if (event.which === KEY_EN && scope.results) {
 
@@ -547,7 +551,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         scope.results = [];
                         scope.showDropdown = false;
                     } else if (event.which === KEY_BS || event.which === KEY_DEL) {
-
                         callOrAssign(null);
                     } else if (event.which === KEY_DW && scope.results) {
                         if ((scope.currentIndex + 1) < scope.results.length) {

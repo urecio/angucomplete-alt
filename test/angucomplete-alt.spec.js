@@ -4,10 +4,16 @@ describe('angucomplete-alt', function () {
     var $compile, $scope, $timeout, element;
     var eEnterKey = $.Event('keyup'),
         eKeyDown = $.Event('keyup'),
-    eEscKey = $.Event('keyup');
+    eEscKey = $.Event('keyup'),
+    eDelKey = $.Event('keyup'),
+    eBsKey = $.Event('keyup'),
+        eKeyUp = $.Event('keyup');
     eEnterKey.which = 13,
     eKeyDown.which = 40,
-        eEscKey.which = 27;
+        eEscKey.which = 27,
+        eDelKey.which = 46,
+        eBsKey.which = 8,
+        eKeyUp.which = 38;
 
 //    functions
     function inputWrite(selector,text, element){
@@ -204,6 +210,7 @@ describe('angucomplete-alt', function () {
 
             //when esc is pressed
             input.trigger(eEscKey);
+
             //should hide the dropdown
             expect(element.find('#ex1_dropdown').length).toBe(0);
 
@@ -694,6 +701,7 @@ describe('angucomplete-alt', function () {
     });
 
     describe('clear result', function () {
+
         it('should clear input when clear-selected is true', function () {
             $scope.selectedCountry = undefined;
             $scope.countries = [
@@ -716,6 +724,7 @@ describe('angucomplete-alt', function () {
 
             expect(element.isolateScope().searchStr).toBe(null);
         });
+
     });
 
     describe('blur', function () {
@@ -845,14 +854,8 @@ describe('angucomplete-alt', function () {
             spyOn($scope,'countrySelected').and.callThrough();
         });
 
-
-            it('should call selectedObject callback if given', function () {
-                //setting
-                element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
-
-                //compiling scope
-                element = compileElement(element);
-
+        describe('callback', function () {
+            var writeAndSelect = function(element){
                 //writting a
                 inputField = inputWrite('#ex1_value','a',element);
                 $timeout.flush();
@@ -865,12 +868,25 @@ describe('angucomplete-alt', function () {
 
                 //the first element of the list should be selected
                 expect(element.isolateScope().currentIndex).toBe(0);
-
+            };
+            var pressEnterAndCheck = function(){
                 //pressing enter
                 inputField.trigger(eEnterKey);
 
                 //the element should have been selected
                 expect(selected).toBe(true);
+            }
+
+
+            it('should call selectedObject callback if given', function () {
+                //setting
+                element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
+
+                //compiling scope
+                element = compileElement(element);
+
+                writeAndSelect(element);
+                pressEnterAndCheck();
 
                 //selected-object callback should have been called
                 expect($scope.countrySelected).toHaveBeenCalled();
@@ -883,28 +899,62 @@ describe('angucomplete-alt', function () {
             //compiling scope
             element = compileElement(element);
 
-            //writting a
-            inputField = inputWrite('#ex1_value','a',element);
-            $timeout.flush();
-
-            //should have results
-            expect(element.find('#ex1_dropdown').length).toBe(1);
-
-            //pressing arrow down
-            inputField.trigger(eKeyDown);
-
-            //the first element of the list should be selected
-            expect(element.isolateScope().currentIndex).toBe(0);
-
-            //pressing enter
-            inputField.trigger(eEnterKey);
-
-            //the element should have been selected
-            expect(selected).toBe(true);
+            writeAndSelect(element);
+            pressEnterAndCheck();
 
             //selected-object callback should have been called with the selected object
             expect($scope.countrySelected).toHaveBeenCalledWith(jasmine.objectContaining({title: 'Afghanistan', description: '', image: ''}));
         });
+        describe('list navigation', function () {
+            it('should select the second row and then the first one', function () {
+                //setting
+                element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
+                //compiling scope
+                element = compileElement(element);
+//                writing 'a' and selecting second row
+                writeAndSelect(element);
+                //pressing arrow down
+                inputField.trigger(eKeyDown);
+
+                //the second element of the list should be selected
+                expect(element.isolateScope().currentIndex).toBe(1);
+
+                //pressing arrow down
+                inputField.trigger(eKeyUp);
+
+                //the second element of the list should be selected
+                expect(element.isolateScope().currentIndex).toBe(0);
+            });
+        });
+        });
+        describe('should call callOrAssign with null', function () {
+            beforeEach(function(){
+
+                //setting
+                element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1" match-class="highlight"/>');
+
+                //compiling scope
+                element = compileElement(element);
+
+                //writting a
+                inputField = inputWrite('#ex1_value','a',element);
+                $timeout.flush();
+
+            });
+            it('when DEL is pressed', function () {
+//            pressing backspace
+                inputField.trigger(eDelKey);
+
+                expect($scope.countrySelected).toHaveBeenCalledWith(null);
+            });
+            it('when BACKSPACE is pressed', function () {
+                //            pressing backspace
+                inputField.trigger(eBsKey);
+
+                expect($scope.countrySelected).toHaveBeenCalledWith(null);
+            });
+        });
+
     });
 
 });
