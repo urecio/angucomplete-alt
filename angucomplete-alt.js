@@ -561,9 +561,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         if (scope.currentIndex >= 1) {
                             scope.currentIndex--;
                         }
-                    } else {
-                        event.preventDefault();
-                    }
+                    } 
                 };
             }
         };
