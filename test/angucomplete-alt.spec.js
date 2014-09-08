@@ -1,9 +1,31 @@
 'use strict';
 
 describe('angucomplete-alt', function () {
-    var $compile, $scope, $timeout;
-    var KEY_DW = 40,
-        KEY_EN = 13;
+    var $compile, $scope, $timeout, element;
+    var eEnterKey = $.Event('keyup'),
+        eKeyDown = $.Event('keyup'),
+    eEscKey = $.Event('keyup');
+    eEnterKey.which = 13,
+    eKeyDown.which = 40,
+        eEscKey.which = 27;
+
+//    functions
+    function inputWrite(selector,text, element){
+
+        //setting new elements from the new isolated scope
+        var inputField = element.find(selector);
+
+        //writting 'a'
+        inputField.val(text);
+        inputField.trigger('input');
+        inputField.triggerHandler('keyup');
+        return inputField;
+    }
+    function compileElement(element){
+        $compile(element)($scope);
+        $scope.$digest();
+        return element;
+    };
 
     beforeEach(module('angucomplete-alt'));
 
@@ -16,94 +38,72 @@ describe('angucomplete-alt', function () {
     describe('Render', function () {
 
         it('should render input element with given id plus _value', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" selected-object="selectedCountry" title-field="name"></div>');
             $scope.selectedCountry = null;
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" selected-object="selectedCountry" title-field="name"></div>'));
             expect(element.find('#ex1_value').length).toBe(1);
         });
 
         it('should render planceholder string', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name"/>');
             $scope.selectedCountry = null;
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name"/>'));
             expect(element.find('#ex1_value').attr('placeholder')).toEqual('Search countries');
         });
 
     });
 
     describe('Local data', function () {
-
-        it('should show search results after 3 letter is entered', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name"/>');
-            $scope.selectedCountry = undefined;
+        beforeEach(function(){
+            //        setting results and selected result
             $scope.countries = [
                 {name: 'Afghanistan', code: 'AF'},
                 {name: 'Aland Islands', code: 'AX'},
                 {name: 'Albania', code: 'AL'}
             ];
-            $compile(element)($scope);
-            $scope.$digest();
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
+            $scope.selectedCountry = undefined;
+        });
+        it('should show search results after 3 letter is entered', function () {
 
-            e.which = 97; // letter: a
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
-            expect(element.find('.angucomplete-row').length).toBe(0);
 
-            e.which = 108; // letter: l
-            inputField.val('al');
-            inputField.trigger('input');
-            inputField.trigger(e);
-            expect(element.find('.angucomplete-row').length).toBe(0);
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name"/>'));
 
-            e.which = 98; // letter: b
-            inputField.val('alb');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //writting a
+            inputWrite('#ex1_value','a',element);
             $timeout.flush();
+
+            //shouldnt show anything, as the minlength is setted to 3 by default
+            expect(element.find('.angucomplete-row').length).toBe(0);
+
+            //writting 2 letters
+            inputWrite('#ex1_value','al',element);
+
+            //same for 2 letters
+            expect(element.find('.angucomplete-row').length).toBe(0);
+
+//            writting three letters
+            inputWrite('#ex1_value','alb',element);
+            $timeout.flush();
+
+//            now it should show some resuls
             expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
         });
 
         it('should show search results after 1 letter is entered with minlength being set to 1', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>'));
+
+            //writting a
+            inputWrite('#ex1_value','a',element);
             $timeout.flush();
+
+//            should show results
             expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
         });
         it('it should say "type more" when term length is lower than minLength', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="2"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="2"/>'));
+
+            //writting a
+            var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
+
 //          those three variables should make the type more phrase visible
             expect(element.isolateScope().typemore).toBeTruthy();
             expect(element.isolateScope().showDropdown).toBeTruthy();
@@ -112,157 +112,132 @@ describe('angucomplete-alt', function () {
 
 
         it('should show last results when the new term equals the old term', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>'));
+
+            //writting a
+            var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
+
+//            should show results
             expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             //added a space
             inputField.val('a ');
-            inputField.trigger(e);
+            inputField.trigger('keyup');
 
             //blur the input
             inputField.triggerHandler('blur');
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(0);
 
-            //pressed keydown inside the input
-            e.which = KEY_DW;
-            inputField.trigger(e);
+            //pressed keydown inside the input should search again
+            inputField.trigger(eKeyDown);
             $timeout.flush();
 
             //then it should present the last results
             expect(element.find('#ex1_dropdown').length).toBeGreaterThan(0);
         });
         it('should call an external function when writting if writting-callback is defined', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
-                'selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name"' +
-                ' minlength="1" writting-callback="mycallback"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
             //callback function to call
             $scope.mycallback = function () {
                 //do some stuff
             };
             spyOn($scope, 'mycallback');
-            $compile(element)($scope);
-            $scope.$digest();
 
-            //writting a letter in the input
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
+                'selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name"' +
+                ' minlength="1" writting-callback="mycallback"/>'));
+
+            //writting a
+            inputWrite('#ex1_value','a',element);
+            $timeout.flush();
 
             //then the callback should have been called
             expect($scope.mycallback).toHaveBeenCalled();
         });
         it('should hide the dropdown when the term is empty', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
                 'local-data="countries" search-fields="name" title-field="name"' +
-                ' minlength="1"/>');
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
+                ' minlength="1"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
-
+            //writting a
+            var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
 
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
-            inputField.val('');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //no results deleting the search
+            inputWrite('#ex1_value','',element);
 
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
         it('should set the currentIndex of the row when mouse is overed', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
                 'local-data="countries" search-fields="name" title-field="name"' +
-                ' minlength="1"/>');
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
+                ' minlength="1"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
-
+            //writting a
+            inputWrite('#ex1_value','a',element);
             $timeout.flush();
 
+//            should show results
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
+//            putting the mouse over the first result
             var result = element.find('.angucomplete-row div:first');
             result.trigger('mouseover');
+
+//            the current index should have been updated
             expect(element.isolateScope().currentIndex).toBe(0);
+        });
+        it('should hide the dropdown list when press ESC', function () {
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" ' +
+                'local-data="countries" search-fields="name" title-field="name"' +
+                ' minlength="1"/>'));
+
+            //writting a
+            var input = inputWrite('#ex1_value','a',element);
+            $timeout.flush();
+
+            //should show results
+            expect(element.find('#ex1_dropdown').length).toBe(1);
+
+            //when esc is pressed
+            input.trigger(eEscKey);
+            //should hide the dropdown
+            expect(element.find('#ex1_dropdown').length).toBe(0);
+
         });
     });
 
     describe('processResults', function () {
 
         it('should set scope.results[0].title', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" minlength="1"/>'));
+
             var name = 'John';
             var responseData = [
                 {name: name}
             ];
+
             element.isolateScope().processResults(responseData);
             expect(element.isolateScope().results[0].title).toBe(name);
         });
 
         it('should set scope.results[0].title for two title fields', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="firstName,lastName" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="firstName,lastName" minlength="1"/>'));
 
             var lastName = 'Doe', firstName = 'John';
             var responseData = [
                 {lastName: lastName, firstName: firstName}
             ];
+
             element.isolateScope().processResults(responseData);
             expect(element.isolateScope().results[0].title).toBe(firstName + ' ' + lastName);
         });
 
         it('should set scope.results[0].title to more than one level deep attribute', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name.first,name.last" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name.first,name.last" minlength="1"/>'));
 
             var first = 'John';
             var last = 'Doe';
@@ -279,9 +254,7 @@ describe('angucomplete-alt', function () {
         });
 
         it('should set scope.results[0].description', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" description-field="desc" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" description-field="desc" minlength="1"/>'));
 
             var description = 'blah blah blah';
             var responseData = [
@@ -292,9 +265,7 @@ describe('angucomplete-alt', function () {
         });
 
         it('should set scope.results[0].description to more than one level deep attribute', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" description-field="desc.short" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" description-field="desc.short" minlength="1"/>'));
 
             var desc = 'short desc...';
             var responseData = [
@@ -311,9 +282,7 @@ describe('angucomplete-alt', function () {
         });
 
         it('should set scope.results[0].image', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" image-field="pic" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" image-field="pic" minlength="1"/>'));
 
             var image = 'some pic';
             var responseData = [
@@ -324,9 +293,7 @@ describe('angucomplete-alt', function () {
         });
 
         it('should set scope.results[0].image to more than one level deep attribute', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" image-field="pic.small" minlength="1"/>');
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" image-field="pic.small" minlength="1"/>'));
 
             var image = 'small pic';
             var responseData = [
@@ -343,14 +310,13 @@ describe('angucomplete-alt', function () {
             expect(element.isolateScope().results[0].image).toBe(image);
         });
         it('should callback on every row of the results if custom-processing is defined', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" minlength="1" custom-processing="customProcessing"/>');
             $scope.customProcessing = function (results) {
                 //do something with results
                 return results;
             };
             spyOn($scope, 'customProcessing').and.callThrough();
-            $compile(element)($scope);
-            $scope.$digest();
+
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" local-data="names" search-fields="name" title-field="name" minlength="1" custom-processing="customProcessing"/>'));
 
             var responseData = [
                 {
@@ -358,7 +324,7 @@ describe('angucomplete-alt', function () {
                 }
             ];
             element.isolateScope().processResults(responseData);
-            expect($scope.customProcessing).toHaveBeenCalled();
+            expect($scope.customProcessing).toHaveBeenCalledWith(jasmine.objectContaining({name: 'John'}));
         });
     });
 
@@ -366,15 +332,14 @@ describe('angucomplete-alt', function () {
 
         describe('local data', function () {
             it('should set $scope.searching to false and call $scope.processResults', function () {
-                var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
                 $scope.selectedCountry = undefined;
                 $scope.countries = [
                     {name: 'Afghanistan', code: 'AF'},
                     {name: 'Aland Islands', code: 'AX'},
                     {name: 'Albania', code: 'AL'}
                 ];
-                $compile(element)($scope);
-                $scope.$digest();
+
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'al';
                 spyOn(element.isolateScope(), 'processResults');
@@ -390,9 +355,7 @@ describe('angucomplete-alt', function () {
             ]};
 
             it('should call $http with given url and param', inject(function ($httpBackend) {
-                var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = search;
                 $httpBackend.expectGET('search?q=' + search).respond(200, results);
@@ -404,9 +367,7 @@ describe('angucomplete-alt', function () {
             }));
 
             it('should set $scope.searching to false and call $scope.processData after success', inject(function ($httpBackend) {
-                var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = search;
                 spyOn(element.isolateScope(), 'processData');
@@ -422,9 +383,7 @@ describe('angucomplete-alt', function () {
             }));
 
             it('should call $scope.processData with more than one level deep of data attribute', inject(function ($httpBackend) {
-                var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="search.data" title-field="name" minlength="1"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="search.data" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'john';
                 var results = {
@@ -451,22 +410,15 @@ describe('angucomplete-alt', function () {
             }));
 
             it('should not throw an exception when match-class is set and remote api returns bogus results', inject(function ($httpBackend) {
-                var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" description="type" minlength="1" match-class="highlight"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" description="type" minlength="1" match-class="highlight"/>'));
 
                 var results = {data: [
                     {name: 'tim', type: 'A'}
                 ]};
                 $httpBackend.expectGET('search?q=a').respond(200, results);
 
-                var inputField = element.find('#ex1_value');
-                var e = $.Event('keyup');
-                e.which = 97; // letter: a
-
-                inputField.val('a');
-                inputField.trigger('input');
-                inputField.trigger(e);
+                //writting a
+                inputWrite('#ex1_value','a',element);
                 $timeout.flush();
                 $httpBackend.flush();
 
@@ -477,9 +429,7 @@ describe('angucomplete-alt', function () {
             it('should suggest correct words close to the typo', inject(function ($httpBackend) {
 
 
-                var element = angular.element('<div angucomplete-alt id="ex1" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'albanistan';
                 var results = {
@@ -508,9 +458,7 @@ describe('angucomplete-alt', function () {
             it('should set an error when there is an error with the request but there is data', inject(function ($httpBackend) {
 
 
-                var element = angular.element('<div angucomplete-alt id="ex1" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'albanistan';
                 var results = {
@@ -537,14 +485,13 @@ describe('angucomplete-alt', function () {
 
             }));
             it('should set an error when there is an error with the request and the remoteUrlRequestFormatter is defined and there is data', inject(function ($httpBackend) {
-
-
-                var element = angular.element('<div angucomplete-alt id="ex1" remote-url-request-formatter="dataFormatFn" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>');
                 $scope.dataFormatFn = function (str) {
                     return {q: str};
                 };
                 $compile(element)($scope);
                 $scope.$digest();
+
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" remote-url-request-formatter="dataFormatFn" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'albanistan';
                 var results = {
@@ -573,9 +520,7 @@ describe('angucomplete-alt', function () {
             it('should show "no results" when there is an error with the request and there is no data', inject(function ($httpBackend) {
 
 
-                var element = angular.element('<div angucomplete-alt id="ex1" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>');
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'albanistan';
                 var results = {
@@ -607,13 +552,10 @@ describe('angucomplete-alt', function () {
             }));
             it('should set no results when there is an error with the request and the remoteUrlRequestFormatter is defined and there is no data', inject(function ($httpBackend) {
 
-
-                var element = angular.element('<div angucomplete-alt id="ex1" remote-url-request-formatter="dataFormatFn" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>');
                 $scope.dataFormatFn = function (str) {
                     return {q: str};
                 };
-                $compile(element)($scope);
-                $scope.$digest();
+                element = compileElement(angular.element('<div angucomplete-alt id="ex1" remote-url-request-formatter="dataFormatFn" suggestions-property="suggestion" placeholder="Search names" selected-object="selected" remote-url="search" search-fields="name" remote-url-data-field="results" title-field="name" minlength="1"/>'));
 
                 element.isolateScope().searchStr = 'albanistan';
                 var results = {
@@ -676,20 +618,21 @@ describe('angucomplete-alt', function () {
                 expect(sce.getTrustedHtml((highlight('paco el flaco, paco el flaco', 'el', 'class', 12, 3)))).toBe('paco <span class="class">el</span> fl...paco <span class="class">el</span> fl...');
             });
         });
+
     });
 
     describe('custom data function for ajax request', function () {
 
         it('should call the custom data function for ajax request if it is given', inject(function ($httpBackend) {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names" search-fields="name" remote-url-data-field="data" remote-url-request-formatter="dataFormatFn" title-field="name" minlength="1"/>');
-            var sequenceNum = 1234567890,
-                query = 'john';
+
             $scope.dataFormatFn = function (str) {
                 return {q: str, sequence: sequenceNum};
             };
             spyOn($scope, 'dataFormatFn').and.callThrough();
-            $compile(element)($scope);
-            $scope.$digest();
+
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names" search-fields="name" remote-url-data-field="data" remote-url-request-formatter="dataFormatFn" title-field="name" minlength="1"/>'));
+            var sequenceNum = 1234567890,
+                query = 'john';
 
             element.isolateScope().searchStr = query;
             var results = {data: [
@@ -707,10 +650,8 @@ describe('angucomplete-alt', function () {
 
     describe('custom data formatter function for ajax response', function () {
         it('should not run response data through formatter if not given', inject(function ($httpBackend) {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="first" remote-url-data-field="data" title-field="name" minlength="1"/>');
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="names?q=" search-fields="first" remote-url-data-field="data" title-field="name" minlength="1"/>'));
             var query = 'john';
-            $compile(element)($scope);
-            $scope.$digest();
 
             element.isolateScope().searchStr = query;
             var results = {data: [
@@ -727,7 +668,6 @@ describe('angucomplete-alt', function () {
         }));
 
         it('should run response data through formatter if given', inject(function ($httpBackend) {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url-response-formatter="dataConverter" remote-url="names?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>');
             $scope.dataConverter = function (rawData) {
                 var data = rawData.data;
                 for (var i = 0; i < data.length; i++) {
@@ -735,8 +675,7 @@ describe('angucomplete-alt', function () {
                 }
                 return rawData;
             };
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url-response-formatter="dataConverter" remote-url="names?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>'));
 
             var query = 'john';
             element.isolateScope().searchStr = query;
@@ -756,32 +695,23 @@ describe('angucomplete-alt', function () {
 
     describe('clear result', function () {
         it('should clear input when clear-selected is true', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>');
-
             $scope.selectedCountry = undefined;
             $scope.countries = [
                 {name: 'Afghanistan', code: 'AF'},
                 {name: 'Aland Islands', code: 'AX'},
                 {name: 'Albania', code: 'AL'}
             ];
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var eKeyup = $.Event('keyup');
-            eKeyup.which = 97; // letter: a
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(eKeyup);
+            //writting a
+            var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
-            eKeyup.which = KEY_DW;
-            inputField.trigger(eKeyup);
+            inputField.trigger(eKeyDown);
             expect(element.isolateScope().currentIndex).toBe(0);
 
-            eKeyup.which = KEY_EN;
-            inputField.trigger(eKeyup);
+            inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual({name: 'Afghanistan', code: 'AF'});
 
             expect(element.isolateScope().searchStr).toBe(null);
@@ -789,24 +719,19 @@ describe('angucomplete-alt', function () {
     });
 
     describe('blur', function () {
-        it('should hide dropdown when focus is lost', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>');
+        beforeEach(function(){
             $scope.selectedCountry = undefined;
             $scope.countries = [
                 {name: 'Afghanistan', code: 'AF'},
                 {name: 'Aland Islands', code: 'AX'},
                 {name: 'Albania', code: 'AL'}
             ];
-            $compile(element)($scope);
-            $scope.$digest();
+        });
+        it('should hide dropdown when focus is lost', function () {
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //writting a
+            var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
             inputField.triggerHandler('blur');
@@ -817,23 +742,10 @@ describe('angucomplete-alt', function () {
         });
 
         it('should cancel hiding the dropdown if it happens within pause period', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //writting a
+            var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
@@ -846,32 +758,15 @@ describe('angucomplete-alt', function () {
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
         it("shouldnt lose hide the list when the show more button is clicked. using bootstrap or not", function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true"/>');
-            var e = $.Event('keyup'), inputField;
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true"/>'));
 
-            function digestAndTrigger() {
-                $scope.selectedCountry = undefined;
-                $scope.countries = [
-                    {name: 'Afghanistan', code: 'AF'},
-                    {name: 'Aland Islands', code: 'AX'},
-                    {name: 'Albania', code: 'AL'}
-                ];
-                $compile(element)($scope);
-                $scope.$digest();
+            inputWrite('#ex1_value','a',element);
+            $timeout.flush();
 
-                inputField = element.find('#ex1_value');
-                e.which = 97; // letter: a
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true" use-bootstrap="true"/>'));
 
-                inputField.val('a');
-                inputField.trigger('input');
-                inputField.trigger(e);
-                $timeout.flush();
-            }
-
-            digestAndTrigger();
-
-            element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true" use-bootstrap="true"/>');
-            digestAndTrigger();
+            var inputField = inputWrite('#ex1_value','a',element);
+            $timeout.flush();
 
             element.isolateScope().dropClick();
             inputField.triggerHandler('blur');
@@ -880,81 +775,47 @@ describe('angucomplete-alt', function () {
     });
 
     describe('override results', function () {
-        it('should override results when enter is pressed but no result is selected', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" override-results="true"/>');
+        beforeEach(function(){
             $scope.selectedCountry = undefined;
             $scope.countries = [
                 {name: 'Afghanistan', code: 'AF'},
                 {name: 'Aland Islands', code: 'AX'},
                 {name: 'Albania', code: 'AL'}
             ];
-            $compile(element)($scope);
-            $scope.$digest();
+        });
+        it('should override results when enter is pressed but no result is selected', function () {
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" override-results="true"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-
-            inputField.val('abc');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //writting abc
+            var inputField = inputWrite('#ex1_value','abc',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
-            e.which = KEY_EN;
-            inputField.trigger(e);
+            inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual('abc');
             inputField.triggerHandler('blur');
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
         it('should not override results when enter is pressed but no result is selected', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-
-            inputField.val('abc');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //writting abc
+            var inputField = inputWrite('#ex1_value','abc',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
-            e.which = KEY_EN;
-            inputField.trigger(e);
+            inputField.trigger(eEnterKey);
             expect(element.isolateScope().results).toEqual([]);
         });
         it('should override suggestions when enter is pressed but no suggestion is selected also incorporate with clear-selected if it is set', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" override-results="true" clear-selected="true"/>');
-            $scope.selectedCountry = undefined;
-            $scope.countries = [
-                {name: 'Afghanistan', code: 'AF'},
-                {name: 'Aland Islands', code: 'AX'},
-                {name: 'Albania', code: 'AL'}
-            ];
-            $compile(element)($scope);
-            $scope.$digest();
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" override-results="true" clear-selected="true"/>'));
 
-            var inputField = element.find('#ex1_value');
-            var e = $.Event('keyup');
-            e.which = 97; // letter: a
-
-            inputField.val('abc');
-            inputField.trigger('input');
-            inputField.trigger(e);
+            //writting abc
+            var inputField = inputWrite('#ex1_value','abc',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
-            e.which = KEY_EN;
-            inputField.trigger(e);
+            inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual('abc');
             inputField.triggerHandler('blur');
             expect(element.find('#ex1_dropdown').length).toBe(0);
@@ -964,45 +825,15 @@ describe('angucomplete-alt', function () {
     });
 
     describe('select a result', function () {
-            it('should call selectedObject callback if given', function () {
-                var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
-                var selected = false;
-                $scope.countrySelected = function (value) {
-                    selected = true;
-                };
-                $scope.countries = [
-                    {name: 'Afghanistan', code: 'AF'},
-                    {name: 'Aland Islands', code: 'AX'},
-                    {name: 'Albania', code: 'AL'}
-                ];
-                $compile(element)($scope);
-                $scope.$digest();
-
-                expect(selected).toBe(false);
-                var inputField = element.find('#ex1_value');
-                var eKeyup = $.Event('keyup');
-                eKeyup.which = 97; // letter: a
-
-                inputField.val('a');
-                inputField.trigger('input');
-                inputField.trigger(eKeyup);
-                $timeout.flush();
-                expect(element.find('#ex1_dropdown').length).toBe(1);
-
-                eKeyup.which = KEY_DW;
-                inputField.trigger(eKeyup);
-                expect(element.isolateScope().currentIndex).toBe(0);
+        var element, selected, inputField;
 
 
-                eKeyup.which = KEY_EN;
-                inputField.trigger(eKeyup);
-                expect(selected).toBe(true);
-            });
-        it('should set title and description to result if matchClass exists and call selected-object function if given', function () {
-            var element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1" match-class="highlight"/>');
-            var selected = false;
+        beforeEach (function () {
+            //initializing
+            selected = false;
+
+            //defining callback function and results
             $scope.countrySelected = function (value) {
-                $scope.value = value;
                 selected = true;
             };
             $scope.countries = [
@@ -1010,33 +841,70 @@ describe('angucomplete-alt', function () {
                 {name: 'Aland Islands', code: 'AX'},
                 {name: 'Albania', code: 'AL'}
             ];
+            //the callback spy
             spyOn($scope,'countrySelected').and.callThrough();
-            $compile(element)($scope);
-            $scope.$digest();
+        });
 
-            expect(selected).toBe(false);
-            var inputField = element.find('#ex1_value');
-            var eKeyup = $.Event('keyup');
-            eKeyup.which = 97; // letter: a
 
-            inputField.val('a');
-            inputField.trigger('input');
-            inputField.trigger(eKeyup);
+            it('should call selectedObject callback if given', function () {
+                //setting
+                element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1"/>');
+
+                //compiling scope
+                element = compileElement(element);
+
+                //writting a
+                inputField = inputWrite('#ex1_value','a',element);
+                $timeout.flush();
+
+                //should have results
+                expect(element.find('#ex1_dropdown').length).toBe(1);
+
+                //pressing arrow down
+                inputField.trigger(eKeyDown);
+
+                //the first element of the list should be selected
+                expect(element.isolateScope().currentIndex).toBe(0);
+
+                //pressing enter
+                inputField.trigger(eEnterKey);
+
+                //the element should have been selected
+                expect(selected).toBe(true);
+
+                //selected-object callback should have been called
+                expect($scope.countrySelected).toHaveBeenCalled();
+            });
+
+        it('should set title and description to result if matchClass exists and call selected-object function if given', function () {
+            //setting
+            element = angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="countrySelected" local-data="countries" search-fields="name" title-field="name" minlength="1" match-class="highlight"/>');
+
+            //compiling scope
+            element = compileElement(element);
+
+            //writting a
+            inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
+
+            //should have results
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
-            eKeyup.which = KEY_DW;
-            inputField.trigger(eKeyup);
+            //pressing arrow down
+            inputField.trigger(eKeyDown);
+
+            //the first element of the list should be selected
             expect(element.isolateScope().currentIndex).toBe(0);
 
+            //pressing enter
+            inputField.trigger(eEnterKey);
 
-            eKeyup.which = KEY_EN;
-            inputField.trigger(eKeyup);
+            //the element should have been selected
             expect(selected).toBe(true);
 
-            expect($scope.countrySelected).toHaveBeenCalled();
-            expect($scope.value.title).toEqual('Afghanistan');
-            expect($scope.value.description).toEqual('');
+            //selected-object callback should have been called with the selected object
+            expect($scope.countrySelected).toHaveBeenCalledWith(jasmine.objectContaining({title: 'Afghanistan', description: '', image: ''}));
         });
     });
+
 });

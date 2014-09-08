@@ -526,11 +526,11 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 scope.keyUp = function (event) {
                     if (!(event.which === KEY_UP || (event.which === KEY_DW && scope.showDropdown) || event.which === KEY_EN)) {
-
                         search(event);
                     } else if (event.which === KEY_EN && scope.results) {
 
                         if (scope.currentIndex >= 0 && scope.currentIndex < scope.results.length) {
+
                             scope.selectResult(scope.results[scope.currentIndex]);
                             event.preventDefault();
                         } else {
@@ -550,7 +550,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                         callOrAssign(null);
                     } else if (event.which === KEY_DW && scope.results) {
-
                         if ((scope.currentIndex + 1) < scope.results.length) {
                             scope.currentIndex++;
                         }
