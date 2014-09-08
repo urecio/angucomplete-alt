@@ -191,7 +191,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-mousedown="dropClick()" ng-if="showDropdown && !searching">' +
                 '    <div class="angucomplete-searching" ng-show="typemore">Type more...</div>' +
                 '    <div class="angucomplete-searching" ng-show="unreachable">Please, try again later...</div>' +
-                '    <div class="angucomplete-searching" ng-show="!unreachable && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults">No results found</div>' +
+                '    <div class="angucomplete-searching" ng-show="!unreachable && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults"></div>' +
                 '    <div class="angucomplete-searching" ng-show="suggestion">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ suggestion }}</span> </div>' +
                 '    <div class="angucomplete-row" ng-if="!typemore" ng-repeat="result in results" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
                 ' <div class="clickable" ng-click="selectResult(result)">' +
@@ -275,6 +275,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 var isNewSearchNeeded = function (newTerm, oldTerm, event) {
 
                     if (newTerm.length >= minlength && (newTerm !== oldTerm || (event && event.which === KEY_DW))) {
+
                         scope.typemore = false;
                         scope.showDropdown = false;
                         return true;
@@ -561,7 +562,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         if (scope.currentIndex >= 1) {
                             scope.currentIndex--;
                         }
-                    } 
+                    }
                 };
             }
         };

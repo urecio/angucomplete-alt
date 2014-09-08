@@ -91,6 +91,7 @@ describe('angucomplete-alt', function () {
 
 //            now it should show some resuls
             expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
+            
         });
 
         it('should show search results after 1 letter is entered with minlength being set to 1', function () {
@@ -134,6 +135,8 @@ describe('angucomplete-alt', function () {
             //blur the input
             inputField.triggerHandler('blur');
             $timeout.flush();
+
+//            dropdown should be hidden
             expect(element.find('#ex1_dropdown').length).toBe(0);
 
             //pressed keydown inside the input should search again
@@ -141,7 +144,7 @@ describe('angucomplete-alt', function () {
             $timeout.flush();
 
             //then it should present the last results
-            expect(element.find('#ex1_dropdown').length).toBeGreaterThan(0);
+            expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
         });
         it('should call an external function when writting if writting-callback is defined', function () {
             //callback function to call
@@ -170,6 +173,7 @@ describe('angucomplete-alt', function () {
             var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
 
+//            it should present some results
             expect(element.find('#ex1_dropdown').length).toBe(1);
 
             //no results deleting the search
@@ -187,7 +191,7 @@ describe('angucomplete-alt', function () {
             $timeout.flush();
 
 //            should show results
-            expect(element.find('#ex1_dropdown').length).toBe(1);
+            expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
 //            putting the mouse over the first result
             var result = element.find('.angucomplete-row div:first');
@@ -206,7 +210,7 @@ describe('angucomplete-alt', function () {
             $timeout.flush();
 
             //should show results
-            expect(element.find('#ex1_dropdown').length).toBe(1);
+            expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             //when esc is pressed
             input.trigger(eEscKey);
@@ -360,6 +364,15 @@ describe('angucomplete-alt', function () {
             var search = 'john', results = {data: [
                 {name: 'john'}
             ]};
+            var checkIfErrorVisible = function(element){
+                // those three variables should make the error phrase visible
+                expect(element.isolateScope().unreachable).toBeFalsy();
+                expect(element.isolateScope().showDropdown).toBeTruthy();
+                expect(element.isolateScope().typemore).toBeFalsy();
+                expect(element.isolateScope().searching).toBeFalsy();
+                expect(element.isolateScope().suggestion).toBeFalsy();
+                expect(element.isolateScope().results).toBeUndefined();
+            };
 
             it('should call $http with given url and param', inject(function ($httpBackend) {
                 element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search names" selected-object="selected" remote-url="search?q=" search-fields="name" remote-url-data-field="data" title-field="name" minlength="1"/>'));
@@ -546,15 +559,7 @@ describe('angucomplete-alt', function () {
                 $httpBackend.verifyNoOutstandingExpectation();
                 $httpBackend.verifyNoOutstandingRequest();
 
-
-                // those three variables should make the error phrase visible
-                expect(element.isolateScope().unreachable).toBeFalsy();
-                expect(element.isolateScope().showDropdown).toBeTruthy();
-                expect(element.isolateScope().typemore).toBeFalsy();
-                expect(element.isolateScope().searching).toBeFalsy();
-                expect(element.isolateScope().suggestion).toBeFalsy();
-                expect(element.isolateScope().results).toBeUndefined();
-
+                checkIfErrorVisible(element);
 
             }));
             it('should set no results when there is an error with the request and the remoteUrlRequestFormatter is defined and there is no data', inject(function ($httpBackend) {
@@ -581,14 +586,7 @@ describe('angucomplete-alt', function () {
                 $httpBackend.verifyNoOutstandingExpectation();
                 $httpBackend.verifyNoOutstandingRequest();
 
-
-                // those three variables should make the error phrase visible
-                expect(element.isolateScope().unreachable).toBeFalsy();
-                expect(element.isolateScope().showDropdown).toBeTruthy();
-                expect(element.isolateScope().typemore).toBeFalsy();
-                expect(element.isolateScope().searching).toBeFalsy();
-                expect(element.isolateScope().suggestion).toBeFalsy();
-                expect(element.isolateScope().results).toBeUndefined();
+                checkIfErrorVisible(element);
 
             }));
 
@@ -766,7 +764,7 @@ describe('angucomplete-alt', function () {
 
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
-        it("shouldnt lose hide the list when the show more button is clicked. using bootstrap or not", function () {
+        it("shouldnt hide the list when the show more button is clicked. using bootstrap or not", function () {
             element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true"/>'));
 
             inputWrite('#ex1_value','a',element);
@@ -798,7 +796,9 @@ describe('angucomplete-alt', function () {
             //writting abc
             var inputField = inputWrite('#ex1_value','abc',element);
             $timeout.flush();
-            expect(element.find('#ex1_dropdown').length).toBe(1);
+
+//            should show some results
+            expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual('abc');
@@ -811,7 +811,9 @@ describe('angucomplete-alt', function () {
             //writting abc
             var inputField = inputWrite('#ex1_value','abc',element);
             $timeout.flush();
-            expect(element.find('#ex1_dropdown').length).toBe(1);
+
+            //            should show some results
+            expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             inputField.trigger(eEnterKey);
             expect(element.isolateScope().results).toEqual([]);
@@ -822,7 +824,9 @@ describe('angucomplete-alt', function () {
             //writting abc
             var inputField = inputWrite('#ex1_value','abc',element);
             $timeout.flush();
-            expect(element.find('#ex1_dropdown').length).toBe(1);
+
+            //            should show some results
+            expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual('abc');
@@ -860,8 +864,8 @@ describe('angucomplete-alt', function () {
                 inputField = inputWrite('#ex1_value','a',element);
                 $timeout.flush();
 
-                //should have results
-                expect(element.find('#ex1_dropdown').length).toBe(1);
+                //            should show some results
+                expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
                 //pressing arrow down
                 inputField.trigger(eKeyDown);
