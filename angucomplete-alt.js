@@ -525,7 +525,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
 
                 scope.keyUp = function (event) {
-                    if (!(event.which === KEY_UP || (event.which === KEY_DW && scope.showDropdown) || event.which === KEY_EN)) {
+                    if(event.which !== KEY_UP && event.which !== KEY_EN && event.which !== KEY_ES && (event.which !== KEY_DW || !scope.showDropdown)){
                         search(event);
                     } else if (event.which === KEY_EN && scope.results) {
 
