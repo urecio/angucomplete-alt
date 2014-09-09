@@ -341,8 +341,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         var x =window.scrollX,y = window.scrollY;
 
 
-                        elem.find('#'+scope.id+'_value').focus();
-                        window.scrollTo(x,y);
+                        elem.find('#'+scope.id+'_value').triggerHandler('focus');
                         scope.isDropClick=false;
 
                     }
@@ -359,6 +358,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 scope.processData = function (responseData) {
                     var description, image, text;
+                    
                     angular.forEach(responseData, function (object) {
 
                         if (scope.customProcessing) {
@@ -399,6 +399,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     scope.results = [];
                     //todo: test the suggestions
                     if (suggestions !== '') {
+
                         scope.showDropdown = true;
                         scope.suggestion = suggestions;
                         scope.searching = false;
@@ -406,6 +407,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     } else if(extractor.extractValue(dataFormatted, scope.remoteUrlDataField)) {
                         scope.processData(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
                     } else {
+
                         scope.processData(dataFormatted);
                     }
 
@@ -416,7 +418,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     var searchFields, matches, i, match, s, params;
                     if (scope.searchStr.length >= minlength) {
                         if (scope.localData) {//suggestions not working here
-
                             searchFields = scope.searchFields.split(',');
 
                             matches = [];
@@ -431,7 +432,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                                     matches[matches.length] = scope.localData[i];
                                 }
                             }
-
 
                             scope.processResults(matches);
 
@@ -489,6 +489,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         scope.showDropdown = false;
                         lastSearchTerm = null;
                     } else if (isNewSearchNeeded(scope.searchStr, lastSearchTerm, event)) {
+
                         scope.searching = true;
                         lastSearchTerm = scope.searchStr;
                         scope.currentIndex = -1;
@@ -530,6 +531,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     if([KEY_UP,KEY_EN,KEY_ES,KEY_BS,KEY_DEL].indexOf(event.which) === -1 && (event.which !== KEY_DW || !scope.showDropdown)){
 //                        if the key pressed is not in the array
 //                        if it is arrow down, should only pass when the dropdown is false
+
 
                         search(event);
                     } else if (event.which === KEY_EN && scope.results) {

@@ -8,11 +8,11 @@ describe('angucomplete-alt', function () {
     eDelKey = $.Event('keyup'),
     eBsKey = $.Event('keyup'),
         eKeyUp = $.Event('keyup');
-    eEnterKey.which = 13,
-    eKeyDown.which = 40,
-        eEscKey.which = 27,
-        eDelKey.which = 46,
-        eBsKey.which = 8,
+    eEnterKey.which = 13;
+    eKeyDown.which = 40;
+        eEscKey.which = 27;
+        eDelKey.which = 46;
+        eBsKey.which = 8;
         eKeyUp.which = 38;
 
 //    functions
@@ -31,7 +31,7 @@ describe('angucomplete-alt', function () {
         $compile(element)($scope);
         $scope.$digest();
         return element;
-    };
+    }
 
     beforeEach(module('angucomplete-alt'));
 
@@ -591,35 +591,35 @@ describe('angucomplete-alt', function () {
             }));
 
         });
-        describe("filter", function () {
+        describe('filter', function () {
             var highlight, sce;
             beforeEach(inject(function ($injector) {
                 highlight = $injector.get('highlightFilter');
                 sce = $injector.get('$sce');
             }));
-            it("should short a string its length is greater than the range of subMin and subMax ", function () {
+            it('should short a string its length is greater than the range of subMin and subMax ', function () {
                 expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', 3, 3))).toBe('...co <span class="class">el</span> fl...');
             });
-            it("should change submin to 0 when it's bellow the index of the match ", function () {
+            it('should change submin to 0 when its bellow the index of the match ', function () {
 
                 expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', 12, 3))).toBe('paco <span class="class">el</span> fl...');
             });
-            it("shouldn't short the string on the left if submin is not defined ", function () {
+            it('shouldnt short the string on the left if submin is not defined ', function () {
                 expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', null, 3))).toBe('paco <span class="class">el</span> fl...');
             });
-            it("shouldn't short the string on the right if submax is not defined ", function () {
+            it('shouldnt short the string on the right if submax is not defined ', function () {
                 expect(sce.getTrustedHtml(highlight('paco el flaco', 'el', 'class', 3, null))).toBe('...co <span class="class">el</span> flaco');
             });
-            it("shouldn't do anything if there is no target", function () {
+            it('shouldnt do anything if there is no target', function () {
                 expect(highlight(null, 'el', 'class', 3, 3)).toBeUndefined();
             });
-            it("should take 0 as index and sum submin and submax if there isn't match", function () {
+            it('should take 0 as index and sum submin and submax if there isnt match', function () {
                 expect(sce.getTrustedHtml(highlight('paco el flaco', 'raa', 'class', 2, 1))).toBe('pac...');
             });
-            it("shouldn't repeat '...' on the begining of the second shorting", function () {
+            it('shouldnt repeat "..." on the begining of the second shorting', function () {
                 expect(sce.getTrustedHtml((highlight('paco el flaco, paco el flaco', 'el', 'class', 3, 3)))).toBe('...co <span class="class">el</span> fl...co <span class="class">el</span> fl...');
             });
-            it("shouldn't cut the string on the second match, even if the submin is higher than the min index", function () {
+            it('shouldnt cut the string on the second match, even if the submin is higher than the min index', function () {
                 expect(sce.getTrustedHtml((highlight('paco el flaco, paco el flaco', 'el', 'class', 12, 3)))).toBe('paco <span class="class">el</span> fl...paco <span class="class">el</span> fl...');
             });
         });
@@ -758,25 +758,27 @@ describe('angucomplete-alt', function () {
 
             inputField.triggerHandler('blur');
 
-            expect(element.find('#ex1_dropdown').length).toBe(1)
+            expect(element.find('#ex1_dropdown').length).toBe(1);
             $timeout.flush();
             inputField.triggerHandler('focus');
 
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
-        it("shouldnt hide the list when the show more button is clicked. using bootstrap or not", function () {
+        it('shouldnt hide the list when the show more button is clicked. using bootstrap or not', function () {
             element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true"/>'));
-
-            inputWrite('#ex1_value','a',element);
-            $timeout.flush();
-
-            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true" use-bootstrap="true"/>'));
 
             var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
 
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true" use-bootstrap="true"/>'));
+
+            inputWrite('#ex1_value','a',element);
+            $timeout.flush();
+
             element.isolateScope().dropClick();
+
             inputField.triggerHandler('blur');
+
             expect(element.find('#ex1_dropdown').length).toBe(1);
         });
     });
@@ -794,14 +796,14 @@ describe('angucomplete-alt', function () {
             element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" override-results="true"/>'));
 
             //writting abc
-            var inputField = inputWrite('#ex1_value','abc',element);
+            var inputField = inputWrite('#ex1_value','Alb',element);
             $timeout.flush();
 
 //            should show some results
             expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             inputField.trigger(eEnterKey);
-            expect($scope.selectedCountry.originalObject).toEqual('abc');
+            expect($scope.selectedCountry.originalObject).toEqual('Alb');
             inputField.triggerHandler('blur');
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
@@ -809,7 +811,7 @@ describe('angucomplete-alt', function () {
             element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1"/>'));
 
             //writting abc
-            var inputField = inputWrite('#ex1_value','abc',element);
+            var inputField = inputWrite('#ex1_value','Alb',element);
             $timeout.flush();
 
             //            should show some results
@@ -822,14 +824,14 @@ describe('angucomplete-alt', function () {
             element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" override-results="true" clear-selected="true"/>'));
 
             //writting abc
-            var inputField = inputWrite('#ex1_value','abc',element);
+            var inputField = inputWrite('#ex1_value','Alb',element);
             $timeout.flush();
 
             //            should show some results
             expect(element.find('.angucomplete-row').length).toBeGreaterThan(0);
 
             inputField.trigger(eEnterKey);
-            expect($scope.selectedCountry.originalObject).toEqual('abc');
+            expect($scope.selectedCountry.originalObject).toEqual('Alb');
             inputField.triggerHandler('blur');
             expect(element.find('#ex1_dropdown').length).toBe(0);
 
@@ -879,7 +881,7 @@ describe('angucomplete-alt', function () {
 
                 //the element should have been selected
                 expect(selected).toBe(true);
-            }
+            };
 
 
             it('should call selectedObject callback if given', function () {

@@ -337,11 +337,12 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 keys = key.split('.');
                 result = obj;
                 keys.forEach(function (k) {
+
                     result = result[k];
                 });
             }
             else {
-                result = obj;
+                result = '';
             }
 
             return result;
@@ -382,8 +383,9 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     if (subMinIndex <= 0){
                         begining = '';
                         subMinIndex = 0;
+                        subMin = index;
                     } else if(lastSubMax !== -1){
-                        subMinIndex = lastSubMax;
+                        lastSubMax = subMax;
                         begining = '';
                     } else {
                         begining = '...';
@@ -391,36 +393,37 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                     if (subMax) {
 
-                        subMax = subMin + str.length - 1 + subMax;
-                        subMaxIndex = subMinIndex + subMax;
+                        lastSubMax = subMin + str.length + subMax;
+                        subMaxIndex = subMinIndex + lastSubMax;
                         ending = (subMaxIndex < target.length) ? '...' : '';
 
-                        result += begining + target.substr(subMinIndex, subMax) + ending;
+                        result += begining + target.substr(subMinIndex, lastSubMax) + ending;
 
-                        lastSubMax = subMax;
                     } else {
 
                         result += begining + target.substr(subMinIndex);
 
                     }
-                } else if (subMax) {
+                } else if (subMax && index !== -1) {
 
-                    subMax =  str.length - 1 + subMax;
+                    subMax = index + str.length + subMax;
                     ending = (subMax < target.length) ? '...' : '';
 
                     result += target.substr(0, subMax) + ending;
 
                     lastSubMax = subMax;
 
-                } else {
+                } else if(subMax){
 
+
+                    ending = (subMax < target.length) ? '...' : '';
+
+                    result += target.substr(0, subMax) + ending;
+
+                    lastSubMax = subMax;
+
+                }else{
                     result = target;
-
-                }
-                if (matchClass){
-
-                    result = result.replace(re,
-                        '<span class="' + matchClass + '">' + str + '</span>');
                 }
 
             };
@@ -431,13 +434,19 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
             index = target.toLowerCase().indexOf(str.toLowerCase());
             if (index !== -1) {
+
                 extractString();
                 lastIndex = target.toLowerCase().lastIndexOf(str.toLowerCase());
                 if (lastIndex !== -1 && lastIndex !== index) {
                     index = lastIndex;
+
                     extractString();
                 }
+                if (matchClass && index !== -1){
 
+                    result = result.replace(re,
+                        '<span class="' + matchClass + '">' + str + '</span>');
+                }
             }
             else {
                 subMax += subMin;
@@ -485,7 +494,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 minlength: '@',
                 matchClass: '@',
                 clearSelected: '@',
-                overrideSuggestions: '@',
+                overrideResults: '@',
                 customProcessing: '=',
                 suggestionsProperty: '@',
                 maxWaitTime: '@',
@@ -501,8 +510,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-mousedown="dropClick()" ng-if="showDropdown && !searching">' +
                 '    <div class="angucomplete-searching" ng-show="typemore">Type more...</div>' +
                 '    <div class="angucomplete-searching" ng-show="unreachable">Please, try again later...</div>' +
-                '    <div class="angucomplete-searching" ng-show="!unreachable && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults">No results found</div>' +
-                '    <div class="angucomplete-searching" ng-show="suggestion">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ searchStr }}</span> </div>' +
+                '    <div class="angucomplete-searching" ng-show="!unreachable && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults"></div>' +
+                '    <div class="angucomplete-searching" ng-show="suggestion">Did you mean <span class="btn-link" ng-click="searchStr=suggestion">{{ suggestion }}</span> </div>' +
                 '    <div class="angucomplete-row" ng-if="!typemore" ng-repeat="result in results" ng-mouseover="hoverRow($index)" ng-class="{\'angucomplete-selected-row\': $index == currentIndex}">' +
                 ' <div class="clickable" ng-click="selectResult(result)">' +
                 '    <div ng-if="imageField" class="angucomplete-image-holder">' +
@@ -510,12 +519,12 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 '        <div ng-if="!result.image && result.image != \'\'" class="angucomplete-image-default"></div>' +
                 '      </div>' +
                 '<div class="title-description">    ' +
-                '      <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass:{{ subMinTitle }}:{{ subMaxTitle }}"></div>' +
-                '      <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass:{{ subMinDescription }}:{{ subMaxDescription }}"></div>' +
+                '      <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass:subMinTitle:subMaxTitle"></div>' +
+                '      <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass:subMinDescription:subMaxDescription"></div>' +
                 '</div>' +
                 '</div>' +
                 '<div ng-if="(subMinTitle || subMaxTitle || subMinDescription || subMaxDescription) && showMore && !useBootstrap">' +
-                '  <a class="show-more" ng-click="isOpen=!isOpen">{{isOpen ? "Show less..." : "Show more..."}}</a>' +
+                '  <a id="show-more" class="show-more" ng-click="isOpen=!isOpen">{{isOpen ? "Show less..." : "Show more..."}}</a>' +
                 '<div class="title-description-more" ng-show="isOpen">' +
                 '  <div class="angucomplete-title vcenter" ng-class="{titlealone: !result.description || result.description ==\'\'}" ng-bind-html="result.title | highlight:searchStr:matchClass"></div>' +
                 '  <div ng-if="result.description && result.description != \'\'" class="angucomplete-description" ng-bind-html="result.description | highlight:searchStr:matchClass"></div>' +
@@ -555,7 +564,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     scope.isDropClick = true;
 
                 };
-
                 var callOrAssign = function (value) {
                     if (typeof scope.selectedObject === 'function') {
                         scope.selectedObject(value);
@@ -566,8 +574,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 };
 
                 var returnFunctionOrIdentity = function (fn) {
-                    return fn && typeof fn === 'function' ? fn : function (data) {
-                        return data;
+                    return function(data) {
+                        return scope[fn] ? scope[fn](data) : data;
                     };
                 };
 
@@ -586,6 +594,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 var isNewSearchNeeded = function (newTerm, oldTerm, event) {
 
                     if (newTerm.length >= minlength && (newTerm !== oldTerm || (event && event.which === KEY_DW))) {
+
                         scope.typemore = false;
                         scope.showDropdown = false;
                         return true;
@@ -598,6 +607,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         scope.showDropdown = true;
                         return false;
                     }
+
                 };
                 if (!scope.subMinTitle) {
                     scope.subMinTitle = SUB_MIN_TITLE;
@@ -630,8 +640,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     scope.clearSelected = false;
                 }
 
-                if (!scope.overrideSuggestions) {
-                    scope.overrideSuggestions = false;
+                if (!scope.overrideResults) {
+                    scope.overrideResults = false;
                 }
 
 
@@ -639,7 +649,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 scope.textNoResults = attrs.textNoResults ? attrs.textNoResults : TEXT_NORESULTS;
 
                 scope.hideResults = function () {
-                    if(scope.isDropClick === false){
+                    if(!scope.isDropClick || scope.isDropClick === false){
                         hideTimer = $timeout(function () {
 
 
@@ -649,11 +659,9 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     }else{
                         var x =window.scrollX,y = window.scrollY;
 
-                        $timeout(function () {
-                            angular.element(document.querySelector('#'+scope.id+'_value'))[0].focus();
-                            window.scrollTo(x,y);
-                            scope.isDropClick=false;
-                        }, 0, false);
+
+                        elem.find('#'+scope.id+'_value').triggerHandler('focus');
+                        scope.isDropClick=false;
 
                     }
 
@@ -661,16 +669,17 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 };
                 scope.resetHideResults = function () {
-
                     if (hideTimer) {
                         $timeout.cancel(hideTimer);
                     }
                 };
 
 
-                scope.process = function (responseData) {
+                scope.processData = function (responseData) {
                     var description, image, text;
+                    
                     angular.forEach(responseData, function (object) {
+
                         if (scope.customProcessing) {
                             object = scope.customProcessing(object);
                         }
@@ -695,23 +704,30 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                             image: image,
                             originalObject: object
                         };
-                        scope.searching = false;
+
+
 
                     });
+                    scope.searching = false;
+                    scope.showDropdown = true;
                 };
 
                 scope.processResults = function (responseData) {
-                    var dataFormatted = responseFormatter(responseData),
-                        data;
+                    var dataFormatted = responseFormatter(responseData);
+                    var suggestions = extractor.extractValue(dataFormatted, scope.suggestionsProperty);
                     scope.results = [];
-
                     //todo: test the suggestions
-                    if (extractor.extractValue(dataFormatted, scope.suggestionsProperty)) {
-                        data = extractor.extractValue(dataFormatted, scope.remoteUrlDataField);
-                        scope.suggestion = extractor.extractValue(data, scope.titleField);
+                    if (suggestions !== '') {
+
+                        scope.showDropdown = true;
+                        scope.suggestion = suggestions;
                         scope.searching = false;
+                        scope.processData(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
+                    } else if(extractor.extractValue(dataFormatted, scope.remoteUrlDataField)) {
+                        scope.processData(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
                     } else {
-                        scope.process(extractor.extractValue(dataFormatted, scope.remoteUrlDataField));
+
+                        scope.processData(dataFormatted);
                     }
 
                 };
@@ -719,16 +735,14 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 scope.searchTimerComplete = function () {
                     // Begin the search
                     var searchFields, matches, i, match, s, params;
-
                     if (scope.searchStr.length >= minlength) {
-                        if (scope.localData) {
+                        if (scope.localData) {//suggestions not working here
                             searchFields = scope.searchFields.split(',');
 
                             matches = [];
 
                             for (i = 0; i < scope.localData.length; i++) {
                                 match = false;
-
                                 for (s = 0; s < searchFields.length; s++) {
                                     match = match || (scope.localData[i][searchFields[s]].toLowerCase().indexOf(scope.searchStr.toLowerCase()) >= 0);
                                 }
@@ -738,13 +752,13 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                                 }
                             }
 
-
                             scope.processResults(matches);
 
                         } else if (scope.remoteUrlRequestFormatter) {
                             params = scope.remoteUrlRequestFormatter(scope.searchStr);
                             $http.get(scope.remoteUrl, {timeout: scope.maxWaitTime, params: params}).
                                 success(function (responseData, status, headers, config) {
+
                                     scope.processResults(responseData);
                                 }).
                                 error(function (data, status, headers, config) {
@@ -762,10 +776,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         } else {
                             $http.get(scope.remoteUrl + scope.searchStr, {timeout: scope.maxWaitTime}).
                                 success(function (responseData, status, headers, config) {
-
-                                    scope.processResults(
-                                        extractor.extractValue(responseData)
-                                    );
+                                    scope.processResults(responseData);
                                 }).
                                 error(function (data, status, headers, config) {
 
@@ -797,9 +808,9 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         scope.showDropdown = false;
                         lastSearchTerm = null;
                     } else if (isNewSearchNeeded(scope.searchStr, lastSearchTerm, event)) {
+
                         scope.searching = true;
                         lastSearchTerm = scope.searchStr;
-                        scope.showDropdown = true;
                         scope.currentIndex = -1;
                         scope.results = [];
 
@@ -835,15 +846,22 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
 
                 scope.keyUp = function (event) {
-                    if (!(event.which === KEY_UP || (event.which === KEY_DW && scope.showDropdown) || event.which === KEY_EN)) {
+
+                    if([KEY_UP,KEY_EN,KEY_ES,KEY_BS,KEY_DEL].indexOf(event.which) === -1 && (event.which !== KEY_DW || !scope.showDropdown)){
+//                        if the key pressed is not in the array
+//                        if it is arrow down, should only pass when the dropdown is false
+
+
                         search(event);
                     } else if (event.which === KEY_EN && scope.results) {
+
                         if (scope.currentIndex >= 0 && scope.currentIndex < scope.results.length) {
+
                             scope.selectResult(scope.results[scope.currentIndex]);
                             event.preventDefault();
                         } else {
                             event.preventDefault();
-                            if (scope.overrideSuggestions) {
+                            if (scope.overrideResults) {
                                 setInputString(scope.searchStr);
                             }
                             else {
@@ -851,12 +869,12 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                             }
                         }
                     } else if (event.which === KEY_ES) {
+
                         scope.results = [];
                         scope.showDropdown = false;
                     } else if (event.which === KEY_BS || event.which === KEY_DEL) {
                         callOrAssign(null);
                     } else if (event.which === KEY_DW && scope.results) {
-
                         if ((scope.currentIndex + 1) < scope.results.length) {
                             scope.currentIndex++;
                         }
@@ -865,8 +883,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                         if (scope.currentIndex >= 1) {
                             scope.currentIndex--;
                         }
-                    } else {
-                        event.preventDefault();
                     }
                 };
             }

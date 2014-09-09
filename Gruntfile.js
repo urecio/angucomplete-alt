@@ -20,7 +20,7 @@ module.exports = function (grunt) {
         },
         concat_css: {
             all: {
-                files: {"build/angucomplete-alt-all.css":['bower_components/angular-loading-bar/build/loading-bar.css','angucomplete-alt.css']},
+                files: {'build/angucomplete-alt-all.css':['bower_components/angular-loading-bar/build/loading-bar.css','angucomplete-alt.css']},
             }
         },
         watch: {
