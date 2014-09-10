@@ -142,20 +142,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
             return $sce.trustAsHtml(result);
         };
     }])
-    .directive('ngFocusAsync', ['$parse', function($parse) {
-        return {
-            compile: function($element, attr) {
-                var fn = $parse(attr.ngFocusAsync);
-                return function(scope, element) {
-                    element.on('focus', function(event) {
-                        scope.$evalAsync(function() {
-                            fn(scope, {$event:event});
-                        });
-                    });
-                };
-            }
-        };
-    }])
     .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
         var KEY_DW = 40,
             KEY_UP = 38,
@@ -165,7 +151,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
             KEY_DEL = 46,
             MIN_LENGTH = 3,
             PAUSE = 200,
-            BLUR_TIMEOUT = 200,
             SUB_MIN_TITLE = 400,
             SUB_MAX_TITLE = 400,
             SUB_MIN_DESCRIPTION = 400,
@@ -206,7 +191,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 useBootstrap: '@?'
             },
             template: '<div ng-form name="angucomplete_form" class="angucomplete-holder">' +
-                '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-blur="hideResults()" ng-focus-async="resetHideResults()" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
+                '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-blur="hideResults($event)" ng-focus="resetHideResults()" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
                 '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-mousedown="dropClick($event)" ng-if="showDropdown && !searching">' +
                 '    <div class="angucomplete-searching" ng-show="typemore">Type more...</div>' +
                 '    <div class="angucomplete-searching" ng-show="unreachable">Please, try again later...</div>' +
@@ -249,7 +234,6 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 //todo: test for local json
                 var minlength = MIN_LENGTH,
                     lastSearchTerm = null,
-                    hideTimer,
                     pauseBeforeSearch = null;
 
                 scope.isFocus = false;
@@ -262,7 +246,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 scope.dropClick = function (event){
                     event.preventDefault();
-                    scope.isDropClick = true;
+                        scope.isDropClick = true;
                 };
                 var callOrAssign = function (value) {
                     if (typeof scope.selectedObject === 'function') {
@@ -348,20 +332,17 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 scope.textSearching = attrs.textSearching ? attrs.textSearching : TEXT_SEARCHING;
                 scope.textNoResults = attrs.textNoResults ? attrs.textNoResults : TEXT_NORESULTS;
 
-                scope.hideResults = function () {
+                scope.hideResults = function (event) {
+
                     if(!scope.isDropClick || scope.isDropClick === false){
-                        hideTimer = $timeout(function () {
-
-
                             scope.showDropdown = false;
-                        }, BLUR_TIMEOUT);
-
                     }else{
+
                         var x =window.scrollX,y = window.scrollY;
 
-                        angular.element( document.querySelector( '#'+scope.id+'_value'))[0].focus();
+
+                        angular.element(elem[0].querySelectorAll('#'+scope.id+'_value')).triggerHandler('focus');
                         window.scrollTo(x,y);
-                        scope.isDropClick=false;
 
                     }
 
@@ -369,9 +350,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
 
                 };
                 scope.resetHideResults = function () {
-                    if (hideTimer) {
-                        $timeout.cancel(hideTimer);
-                    }
+                    scope.isDropClick=false;
+                    scope.showDropdown=false;
                 };
 
 
