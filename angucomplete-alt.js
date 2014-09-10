@@ -57,6 +57,11 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
             // firs of all removing forbidden regex chars from the str
             str = str.replace(regExSpecialChars, '');
             var re = new RegExp(str, 'gi');
+
+            //parsing
+            subMin =  parseInt(subMin);
+            subMax = parseInt(subMax);
+
             var extractString = function () {
                 if (subMin) {
                     // Checking if we are overwritting the last shorting in the same phrase or the string is shorter than the subMin
@@ -137,6 +142,20 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
             return $sce.trustAsHtml(result);
         };
     }])
+    .directive('ngFocusAsync', ['$parse', function($parse) {
+        return {
+            compile: function($element, attr) {
+                var fn = $parse(attr.ngFocusAsync);
+                return function(scope, element) {
+                    element.on('focus', function(event) {
+                        scope.$evalAsync(function() {
+                            fn(scope, {$event:event});
+                        });
+                    });
+                };
+            }
+        };
+    }])
     .directive('angucompleteAlt', ['$parse', '$http', '$timeout', 'extractor', function ($parse, $http, $timeout, extractor) {
         var KEY_DW = 40,
             KEY_UP = 38,
@@ -187,8 +206,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 useBootstrap: '@?'
             },
             template: '<div ng-form name="angucomplete_form" class="angucomplete-holder">' +
-                '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-blur="hideResults()" ng-focus="resetHideResults()" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
-                '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-mousedown="dropClick()" ng-if="showDropdown && !searching">' +
+                '  <input id="{{id}}_value" ng-model="searchStr" type="text" placeholder="{{placeholder}}" class="{{inputClass}}" ng-blur="hideResults()" ng-focus-async="resetHideResults()" ng-keyup="keyUp($event)" ng-change="callChange()" autocapitalize="off" autocorrect="off" autocomplete="off"/>' +
+                '  <div id="{{id}}_dropdown" class="angucomplete-dropdown" ng-mousedown="dropClick($event)" ng-if="showDropdown && !searching">' +
                 '    <div class="angucomplete-searching" ng-show="typemore">Type more...</div>' +
                 '    <div class="angucomplete-searching" ng-show="unreachable">Please, try again later...</div>' +
                 '    <div class="angucomplete-searching" ng-show="!unreachable && !typemore && !suggestion && (!results || results.length == 0)" ng-bind="textNoResults"></div>' +
@@ -241,9 +260,9 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                 scope.suggestion = false;
                 scope.unreachable = false;
 
-                scope.dropClick = function (){
+                scope.dropClick = function (event){
+                    event.preventDefault();
                     scope.isDropClick = true;
-
                 };
                 var callOrAssign = function (value) {
                     if (typeof scope.selectedObject === 'function') {
@@ -340,8 +359,8 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     }else{
                         var x =window.scrollX,y = window.scrollY;
 
-
-                        elem.find('#'+scope.id+'_value').triggerHandler('focus');
+                        angular.element( document.querySelector( '#'+scope.id+'_value'))[0].focus();
+                        window.scrollTo(x,y);
                         scope.isDropClick=false;
 
                     }
@@ -398,7 +417,7 @@ angular.module('angucomplete-alt', ['angular-loading-bar'])
                     var suggestions = extractor.extractValue(dataFormatted, scope.suggestionsProperty);
                     scope.results = [];
                     //todo: test the suggestions
-                    if (suggestions !== '') {
+                    if (suggestions && suggestions !== '') {
 
                         scope.showDropdown = true;
                         scope.suggestion = suggestions;
