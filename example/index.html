@@ -76,11 +76,11 @@
             <div id="example5"></div>
 
             <angucomplete-alt id="searchInput" search-fields="name,abstract" placeholder="Search" pause="400"
-                              selected-object="selectedCountry5" remote-url="//localhost:8080/app_dev.php/search.json?query="
-                              title-field="title" description-field="abstract" minlength="3" input-class="form-control width-100"
+                              selected-object="selectedCountry5" remote-url="http://localhost:8880/angucomplete-alt/example/search.json?query="
+                              title-field="name" description-field="abstract" minlength="3" input-class="form-control width-100"
                               match-class="highlight" image-field="image" writting-callback="hasWritten"
-                              custom-processing="customProcessing" remote-url-data-field="data" suggestions-property="suggestion"
-                              sub-min-title="20" sub-max-title="20" sub-min-description="30" sub-max-description="30" show-more="true"
+                              custom-processing="customProcessing" remote-url-data-field="results" suggestions-property="suggestion"
+                              sub-min-title="20" sub-max-title="20" sub-min-description="20" sub-max-description="30" show-more="true"
                               use-bootstrap="true"/>
         </div>
         <div class="" ng-show="selectedCountry5">
@@ -111,6 +111,7 @@
     <script src="../bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
     <script src="../build/angucomplete-alt-all.js"></script>
 
+    <script src="../bower_components/angular-mocks/angular-mocks.js"></script>
     <script src="js/app/app.js"></script>
     <script src="js/app/controllers/main-controller.js"></script>
 
