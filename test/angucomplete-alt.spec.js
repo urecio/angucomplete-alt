@@ -133,8 +133,7 @@ describe('angucomplete-alt', function () {
             inputField.trigger('keyup');
 
             //blur the input
-            inputField.triggerHandler('blur');
-            $timeout.flush();
+            inputField.blur();
 
 //            dropdown should be hidden
             expect(element.find('#ex1_dropdown').length).toBe(0);
@@ -741,45 +740,31 @@ describe('angucomplete-alt', function () {
             var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
             expect(element.find('#ex1_dropdown').length).toBe(1);
-            inputField.triggerHandler('blur');
-            expect(element.find('#ex1_dropdown').length).toBe(1);
-
-            $timeout.flush();
+            inputField.blur();
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
 
-        it('should cancel hiding the dropdown if it happens within pause period', function () {
-            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true"/>'));
+        it('shouldnt hide the list when the show more button is clicked', function () {
 
-            //writting a
-            var inputField = inputWrite('#ex1_value','a',element);
-            $timeout.flush();
-            expect(element.find('#ex1_dropdown').length).toBe(1);
-
-            inputField.triggerHandler('blur');
-
-            expect(element.find('#ex1_dropdown').length).toBe(1);
-            $timeout.flush();
-            inputField.triggerHandler('focus');
-
-            expect(element.find('#ex1_dropdown').length).toBe(0);
-        });
-        it('shouldnt hide the list when the show more button is clicked. using bootstrap or not', function () {
-            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true"/>'));
+            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry"' +
+                ' local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true" use-bootstrap="true" sub-min-title="5"/>'));
 
             var inputField = inputWrite('#ex1_value','a',element);
             $timeout.flush();
 
-            element = compileElement(angular.element('<div angucomplete-alt id="ex1" placeholder="Search countries" selected-object="selectedCountry" local-data="countries" search-fields="name" title-field="name" minlength="1" clear-selected="true" show-more="true" use-bootstrap="true"/>'));
-
-            inputWrite('#ex1_value','a',element);
-            $timeout.flush();
-
-            element.isolateScope().dropClick();
-
-            inputField.triggerHandler('blur');
-
             expect(element.find('#ex1_dropdown').length).toBe(1);
+
+            // mousing down
+            element.find('#ex1_dropdown').trigger('mousedown');
+
+//            still there
+            expect(element.find('#ex1_dropdown').length).toBe(1);
+
+//            but when triggering blur
+            inputField.blur();
+
+//            shouldnt be there
+            expect(element.find('#ex1_dropdown').length).toBe(0);
         });
     });
 
@@ -804,7 +789,7 @@ describe('angucomplete-alt', function () {
 
             inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual('Alb');
-            inputField.triggerHandler('blur');
+            inputField.blur();
             expect(element.find('#ex1_dropdown').length).toBe(0);
         });
         it('should not override results when enter is pressed but no result is selected', function () {
@@ -832,7 +817,7 @@ describe('angucomplete-alt', function () {
 
             inputField.trigger(eEnterKey);
             expect($scope.selectedCountry.originalObject).toEqual('Alb');
-            inputField.triggerHandler('blur');
+            inputField.blur();
             expect(element.find('#ex1_dropdown').length).toBe(0);
 
             expect(element.isolateScope().searchStr).toBe(null);
