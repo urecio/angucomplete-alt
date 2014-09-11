@@ -43,7 +43,11 @@ module.exports = function (grunt) {
                 browsers: ['PhantomJS']
             },
             unit: {
-                singleRun: true
+                singleRun: true,
+                coverageReporter: {
+                    type: 'text',
+                    dir: 'coverage/'
+                }
             },
             watch: {
                 autoWatch: true
@@ -51,7 +55,6 @@ module.exports = function (grunt) {
             server: {
                 background: true
             }
-
         },
         jshint: {
             all:[
